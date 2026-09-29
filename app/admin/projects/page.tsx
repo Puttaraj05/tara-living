@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://127.0.0.1:8000";
+
 type Project = {
   id: number;
   title: string;
@@ -23,8 +27,11 @@ export default function ProjectsAdminPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        setLoading(true);
+        setError("");
+
         const response = await fetch(
-          "http://127.0.0.1:8000/api/projects/"
+          `${API_URL}/api/projects/`
         );
 
         if (!response.ok) {
@@ -35,6 +42,8 @@ export default function ProjectsAdminPage() {
 
         setProjects(data);
       } catch (error) {
+        console.error("Failed to load projects:", error);
+
         setError(
           error instanceof Error
             ? error.message
@@ -57,18 +66,72 @@ export default function ProjectsAdminPage() {
   };
 
   const getImageUrl = (image: string) => {
+    if (!image) {
+      return "";
+    }
+
     if (image.startsWith("http")) {
       return image;
     }
 
-    return `http://127.0.0.1:8000${image}`;
+    return `${API_URL}${image}`;
+  };
+
+  const deleteProject = async (
+    project: Project
+  ) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${project.title}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/projects/${project.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to delete project"
+        );
+      }
+
+      setProjects((currentProjects) =>
+        currentProjects.filter(
+          (item) => item.id !== project.id
+        )
+      );
+
+      alert("Project deleted successfully.");
+    } catch (error) {
+      console.error(
+        "Project deletion failed:",
+        error
+      );
+
+      alert(
+        "Unable to delete project. Please try again."
+      );
+    }
   };
 
   return (
     <main className="admin-page">
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
+
       <aside className="admin-sidebar">
         <div className="admin-brand">
-          <div className="admin-brand-mark">TL</div>
+          <div className="admin-brand-mark">
+            <img src="/images/logo.png" alt="Tara Living" />
+          </div>
 
           <div>
             <h1>TARA LIVING</h1>
@@ -77,8 +140,14 @@ export default function ProjectsAdminPage() {
         </div>
 
         <nav className="admin-nav">
-          <Link href="/admin" className="admin-nav-item">
-            <span className="admin-nav-icon">⌂</span>
+          <Link
+            href="/admin"
+            className="admin-nav-item"
+          >
+            <span className="admin-nav-icon">
+              ⌂
+            </span>
+
             <span>Dashboard</span>
           </Link>
 
@@ -86,7 +155,10 @@ export default function ProjectsAdminPage() {
             href="/admin/clients"
             className="admin-nav-item"
           >
-            <span className="admin-nav-icon">◉</span>
+            <span className="admin-nav-icon">
+              ◉
+            </span>
+
             <span>Clients</span>
           </Link>
 
@@ -94,36 +166,60 @@ export default function ProjectsAdminPage() {
             href="/admin/projects"
             className="admin-nav-item active"
           >
-            <span className="admin-nav-icon">▣</span>
+            <span className="admin-nav-icon">
+              ▣
+            </span>
+
             <span>Projects</span>
           </Link>
 
-          <button className="admin-nav-item" type="button">
-            <span className="admin-nav-icon">✦</span>
+          <Link
+            href="/admin/services"
+            className="admin-nav-item"
+          >
+            <span className="admin-nav-icon">
+              ✦
+            </span>
+
             <span>Services</span>
-          </button>
+          </Link>
 
-          <button className="admin-nav-item" type="button">
-            <span className="admin-nav-icon">♡</span>
+          <Link
+            href="/admin/testimonials"
+            className="admin-nav-item"
+          >
+            <span className="admin-nav-icon">
+              ♡
+            </span>
+
             <span>Testimonials</span>
-          </button>
-
-          <button className="admin-nav-item" type="button">
-            <span className="admin-nav-icon">↓</span>
-            <span>Export</span>
-          </button>
+          </Link>
         </nav>
 
         <div className="admin-sidebar-footer">
-          <span>© {new Date().getFullYear()} Tara Living</span>
-          <span>Interior Design Studio</span>
+          <span>
+            © {new Date().getFullYear()} Tara Living
+          </span>
+
+          <span>
+            Interior Design Studio
+          </span>
         </div>
       </aside>
 
+      {/* =====================================================
+          MAIN CONTENT
+      ===================================================== */}
+
       <section className="admin-main">
+        {/* TOP BAR */}
+
         <header className="admin-topbar">
           <div>
-            <p className="admin-eyebrow">TARA LIVING</p>
+            <p className="admin-eyebrow">
+              TARA LIVING
+            </p>
+
             <h2>Projects</h2>
           </div>
 
@@ -135,9 +231,13 @@ export default function ProjectsAdminPage() {
           </Link>
         </header>
 
+        {/* INTRO */}
+
         <section className="admin-welcome">
           <div>
-            <p className="admin-eyebrow">PORTFOLIO</p>
+            <p className="admin-eyebrow">
+              PORTFOLIO MANAGEMENT
+            </p>
 
             <h3>
               Your spaces,
@@ -147,15 +247,20 @@ export default function ProjectsAdminPage() {
           </div>
 
           <p className="admin-welcome-text">
-            Manage the interior projects displayed across the
-            Tara Living website.
+            Add, edit and manage the interior
+            projects displayed across the Tara
+            Living website.
           </p>
         </section>
+
+        {/* PROJECTS */}
 
         <section className="admin-projects-section">
           <div className="admin-section-header">
             <div>
-              <p className="admin-eyebrow">ALL PROJECTS</p>
+              <p className="admin-eyebrow">
+                ALL PROJECTS
+              </p>
 
               <h3>
                 {loading
@@ -167,118 +272,164 @@ export default function ProjectsAdminPage() {
                     }`}
               </h3>
             </div>
+
+            {!loading &&
+              !error &&
+              projects.length > 0 && (
+                <Link
+                  href="/admin/projects/add"
+                  className="admin-section-action"
+                >
+                  Add another project
+                  <span>↗</span>
+                </Link>
+              )}
           </div>
+
+          {/* LOADING */}
 
           {loading && (
             <div className="admin-empty-state">
+              <span className="admin-loading-dot">
+                •
+              </span>
+
               Loading projects...
             </div>
           )}
 
+          {/* ERROR */}
+
           {error && (
             <div className="admin-empty-state admin-error">
-              {error}
+              <strong>
+                Unable to load projects
+              </strong>
+
+              <span>{error}</span>
             </div>
           )}
 
-          {!loading && !error && projects.length === 0 && (
-            <div className="admin-empty-state">
-              No projects have been added yet.
-            </div>
-          )}
+          {/* EMPTY */}
 
-          {!loading && !error && projects.length > 0 && (
-            <div className="admin-project-grid">
-              {projects.map((project) => (
-                <article
-                  key={project.id}
-                  className="admin-project-card"
+          {!loading &&
+            !error &&
+            projects.length === 0 && (
+              <div className="admin-empty-state">
+                <strong>
+                  No projects yet.
+                </strong>
+
+                <span>
+                  Add your first interior project
+                  to start building the portfolio.
+                </span>
+
+                <Link
+                  href="/admin/projects/add"
+                  className="admin-project-add-button"
                 >
-                  <div className="admin-project-image">
-                    <img
-                      src={getImageUrl(project.image)}
-                      alt={project.title}
-                    />
+                  + Add Project
+                </Link>
+              </div>
+            )}
 
-                    <span className="admin-project-status">
-                      Published
-                    </span>
-                  </div>
+          {/* PROJECT GRID */}
 
-                  <div className="admin-project-info">
-                    <div>
-                      <p>{project.category}</p>
+          {!loading &&
+            !error &&
+            projects.length > 0 && (
+              <div className="admin-project-grid">
+                {projects.map((project) => (
+                  <article
+                    key={project.id}
+                    className="admin-project-card"
+                  >
+                    {/* IMAGE */}
 
-                      <h4>{project.title}</h4>
+                    <div className="admin-project-image">
+                      {project.image ? (
+                        <img
+                          src={getImageUrl(
+                            project.image
+                          )}
+                          alt={project.title}
+                        />
+                      ) : (
+                        <div className="admin-project-no-image">
+                          No Image
+                        </div>
+                      )}
 
-                      <span>{project.location}</span>
-
-                      <small>
-                        Added {formatDate(project.created_at)}
-                      </small>
+                      <span className="admin-project-status">
+                        Published
+                      </span>
                     </div>
 
-                    <div className="admin-project-actions">
-                      <Link
-                        href={`/admin/projects/${project.id}/edit`}
-                        className="admin-project-edit"
-                      >
-                        Edit <span>↗</span>
-                      </Link>
-                    
-                      <button
-                        type="button"
-                        className="admin-project-delete"
-                        onClick={async () => {
-                          const confirmed = window.confirm(
-                            `Are you sure you want to delete "${project.title}"?`
-                          );
-                    
-                          if (!confirmed) {
-                            return;
+                    {/* CONTENT */}
+
+                    <div className="admin-project-info">
+                      <div className="admin-project-content">
+                        <p>
+                          {project.category ||
+                            "Interior Design"}
+                        </p>
+
+                        <h4>
+                          {project.title}
+                        </h4>
+
+                        <span>
+                          {project.location ||
+                            "Location not specified"}
+                        </span>
+
+                        <small>
+                          Added{" "}
+                          {formatDate(
+                            project.created_at
+                          )}
+                        </small>
+                      </div>
+
+                      {/* ACTIONS */}
+
+                      <div className="admin-project-actions">
+                        <Link
+                          href={`/admin/projects/${project.id}/edit`}
+                          className="admin-project-edit"
+                        >
+                          Edit
+                          <span>↗</span>
+                        </Link>
+
+                        <button
+                          type="button"
+                          className="admin-project-delete"
+                          onClick={() =>
+                            deleteProject(
+                              project
+                            )
                           }
-                    
-                          try {
-                            const response = await fetch(
-                              `http://127.0.0.1:8000/api/projects/${project.id}`,
-                              {
-                                method: "DELETE",
-                              }
-                            );
-                    
-                            if (!response.ok) {
-                              throw new Error("Failed to delete project");
-                            }
-                    
-                            setProjects((previousProjects) =>
-                              previousProjects.filter(
-                                (item) => item.id !== project.id
-                              )
-                            );
-                    
-                            alert("Project deleted successfully!");
-                          } catch (error) {
-                            console.error("Delete failed:", error);
-                    
-                            alert(
-                              "Unable to delete project. Please try again."
-                            );
-                          }
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>                  
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
         </section>
+
+        {/* FOOTER */}
 
         <footer className="admin-footer">
           <span>TARA LIVING</span>
-          <span>Project Management</span>
+
+          <span>
+            Project Management
+          </span>
         </footer>
       </section>
     </main>
