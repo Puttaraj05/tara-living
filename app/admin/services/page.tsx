@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://127.0.0.1:8000";
+
 type Service = {
   id: number;
   title: string;
@@ -20,8 +24,11 @@ export default function ServicesAdminPage() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
+        setLoading(true);
+        setError("");
+
         const response = await fetch(
-          "http://127.0.0.1:8000/api/services/"
+          `${API_URL}/api/services/`
         );
 
         if (!response.ok) {
@@ -32,6 +39,11 @@ export default function ServicesAdminPage() {
 
         setServices(data);
       } catch (error) {
+        console.error(
+          "Failed to load services:",
+          error
+        );
+
         setError(
           error instanceof Error
             ? error.message
@@ -46,30 +58,87 @@ export default function ServicesAdminPage() {
   }, []);
 
   const getImageUrl = (image: string) => {
+    if (!image) {
+      return "";
+    }
+
     if (image.startsWith("http")) {
       return image;
     }
 
     if (image.startsWith("/uploads")) {
-      return `http://127.0.0.1:8000${image}`;
+      return `${API_URL}${image}`;
     }
 
     return image;
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  };
+
+  const deleteService = async (
+    service: Service
+  ) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${service.title}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/services/${service.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to delete service"
+        );
+      }
+
+      setServices((currentServices) =>
+        currentServices.filter(
+          (item) => item.id !== service.id
+        )
+      );
+
+      alert("Service deleted successfully.");
+    } catch (error) {
+      console.error(
+        "Service deletion failed:",
+        error
+      );
+
+      alert(
+        "Unable to delete service. Please try again."
+      );
+    }
   };
 
   return (
     <main className="admin-page">
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
+
       <aside className="admin-sidebar">
         <div className="admin-brand">
-          <div className="admin-brand-mark">TL</div>
+          <div className="admin-brand-mark">
+            <img src="/images/logo.png" alt="Tara Living" />
+          </div>
 
           <div>
             <h1>TARA LIVING</h1>
@@ -82,7 +151,10 @@ export default function ServicesAdminPage() {
             href="/admin"
             className="admin-nav-item"
           >
-            <span className="admin-nav-icon">⌂</span>
+            <span className="admin-nav-icon">
+              ⌂
+            </span>
+
             <span>Dashboard</span>
           </Link>
 
@@ -90,7 +162,10 @@ export default function ServicesAdminPage() {
             href="/admin/clients"
             className="admin-nav-item"
           >
-            <span className="admin-nav-icon">◉</span>
+            <span className="admin-nav-icon">
+              ◉
+            </span>
+
             <span>Clients</span>
           </Link>
 
@@ -98,7 +173,10 @@ export default function ServicesAdminPage() {
             href="/admin/projects"
             className="admin-nav-item"
           >
-            <span className="admin-nav-icon">▣</span>
+            <span className="admin-nav-icon">
+              ▣
+            </span>
+
             <span>Projects</span>
           </Link>
 
@@ -106,34 +184,43 @@ export default function ServicesAdminPage() {
             href="/admin/services"
             className="admin-nav-item active"
           >
-            <span className="admin-nav-icon">✦</span>
+            <span className="admin-nav-icon">
+              ✦
+            </span>
+
             <span>Services</span>
           </Link>
 
-          <button
+          <Link
+            href="/admin/testimonials"
             className="admin-nav-item"
-            type="button"
           >
-            <span className="admin-nav-icon">♡</span>
-            <span>Testimonials</span>
-          </button>
+            <span className="admin-nav-icon">
+              ♡
+            </span>
 
-          <button
-            className="admin-nav-item"
-            type="button"
-          >
-            <span className="admin-nav-icon">↓</span>
-            <span>Export</span>
-          </button>
+            <span>Testimonials</span>
+          </Link>
         </nav>
 
         <div className="admin-sidebar-footer">
-          <span>© {new Date().getFullYear()} Tara Living</span>
-          <span>Interior Design Studio</span>
+          <span>
+            © {new Date().getFullYear()} Tara Living
+          </span>
+
+          <span>
+            Interior Design Studio
+          </span>
         </div>
       </aside>
 
+      {/* =====================================================
+          MAIN CONTENT
+      ===================================================== */}
+
       <section className="admin-main">
+        {/* TOP BAR */}
+
         <header className="admin-topbar">
           <div>
             <p className="admin-eyebrow">
@@ -151,10 +238,12 @@ export default function ServicesAdminPage() {
           </Link>
         </header>
 
+        {/* INTRO */}
+
         <section className="admin-welcome">
           <div>
             <p className="admin-eyebrow">
-              SERVICES
+              SERVICE MANAGEMENT
             </p>
 
             <h3>
@@ -165,10 +254,13 @@ export default function ServicesAdminPage() {
           </div>
 
           <p className="admin-welcome-text">
-            Manage the services displayed across the
-            Tara Living website.
+            Add, edit and manage the services
+            displayed across the Tara Living
+            website.
           </p>
         </section>
+
+        {/* SERVICES */}
 
         <section className="admin-projects-section">
           <div className="admin-section-header">
@@ -187,27 +279,70 @@ export default function ServicesAdminPage() {
                     }`}
               </h3>
             </div>
+
+            {!loading &&
+              !error &&
+              services.length > 0 && (
+                <Link
+                  href="/admin/services/add"
+                  className="admin-section-action"
+                >
+                  Add another service
+                  <span>↗</span>
+                </Link>
+              )}
           </div>
+
+          {/* LOADING */}
 
           {loading && (
             <div className="admin-empty-state">
+              <span className="admin-loading-dot">
+                •
+              </span>
+
               Loading services...
             </div>
           )}
 
+          {/* ERROR */}
+
           {error && (
             <div className="admin-empty-state admin-error">
-              {error}
+              <strong>
+                Unable to load services
+              </strong>
+
+              <span>{error}</span>
             </div>
           )}
+
+          {/* EMPTY */}
 
           {!loading &&
             !error &&
             services.length === 0 && (
               <div className="admin-empty-state">
-                No services have been added yet.
+                <strong>
+                  No services yet.
+                </strong>
+
+                <span>
+                  Add your first service to
+                  start building the Tara Living
+                  service collection.
+                </span>
+
+                <Link
+                  href="/admin/services/add"
+                  className="admin-project-add-button"
+                >
+                  + Add Service
+                </Link>
               </div>
             )}
+
+          {/* SERVICE GRID */}
 
           {!loading &&
             !error &&
@@ -218,25 +353,43 @@ export default function ServicesAdminPage() {
                     key={service.id}
                     className="admin-project-card"
                   >
+                    {/* IMAGE */}
+
                     <div className="admin-project-image">
-                      <img
-                        src={getImageUrl(service.image)}
-                        alt={service.title}
-                      />
+                      {service.image ? (
+                        <img
+                          src={getImageUrl(
+                            service.image
+                          )}
+                          alt={service.title}
+                        />
+                      ) : (
+                        <div className="admin-project-no-image">
+                          No Image
+                        </div>
+                      )}
 
                       <span className="admin-project-status">
                         Published
                       </span>
                     </div>
 
-                    <div className="admin-project-info">
-                      <div>
-                        <p>{service.category}</p>
+                    {/* CONTENT */}
 
-                        <h4>{service.title}</h4>
+                    <div className="admin-project-info">
+                      <div className="admin-project-content">
+                        <p>
+                          {service.category ||
+                            "Interior Design"}
+                        </p>
+
+                        <h4>
+                          {service.title}
+                        </h4>
 
                         <span>
-                          {service.description}
+                          {service.description ||
+                            "No description available."}
                         </span>
 
                         <small>
@@ -247,56 +400,28 @@ export default function ServicesAdminPage() {
                         </small>
                       </div>
 
+                      {/* ACTIONS */}
+
                       <div className="admin-project-actions">
                         <Link
-                         href={`/admin/services/${service.id}/edit`}
-                         className="admin-project-edit"
+                          href={`/admin/services/${service.id}/edit`}
+                          className="admin-project-edit"
                         >
-                          Edit <span>↗</span>
+                          Edit
+                          <span>↗</span>
                         </Link>
 
                         <button
                           type="button"
-                           className="admin-project-delete"
-                           onClick={async () => {
-                             const confirmed = window.confirm(
-                               `Are you sure you want to delete "${service.title}"?`
-                             );
-                          
-                             if (!confirmed) {
-                               return;
-                             }
-                          
-                             try {
-                               const response = await fetch(
-                                 `http://127.0.0.1:8000/api/services/${service.id}`,
-                                 {
-                                   method: "DELETE",
-                                }
-                                 );
-                          
-                              if (!response.ok) {
-                                throw new Error("Failed to delete service");
-                              }
-                          
-                              setServices((previousServices) =>
-                                previousServices.filter(
-                                  (item) => item.id !== service.id
-                                )
-                              );
-                          
-                              alert("Service deleted successfully!");
-                            } catch (error) {
-                              console.error("Delete failed:", error);
-                          
-                               alert(
-                                "Unable to delete service. Please try again."
-                               );
-                            }
-                           }}
-                          >
-                           Delete
-                        </button>                           
+                          className="admin-project-delete"
+                          onClick={() =>
+                            deleteService(
+                              service
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </article>
@@ -305,9 +430,14 @@ export default function ServicesAdminPage() {
             )}
         </section>
 
+        {/* FOOTER */}
+
         <footer className="admin-footer">
           <span>TARA LIVING</span>
-          <span>Service Management</span>
+
+          <span>
+            Service Management
+          </span>
         </footer>
       </section>
     </main>

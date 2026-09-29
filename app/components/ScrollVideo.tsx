@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type ScrollVideoProps = {
   src: string;
@@ -10,19 +10,17 @@ export default function ScrollVideo({
   src,
 }: ScrollVideoProps) {
   const sectionRef = useRef<HTMLElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
+    const frame = frameRef.current;
     const video = videoRef.current;
 
-    if (!section || !video) {
-      return;
-    }
+    if (!section || !frame || !video) return;
 
-    let frame = 0;
+    let raf = 0;
 
     const update = () => {
       const rect = section.getBoundingClientRect();
@@ -30,98 +28,83 @@ export default function ScrollVideo({
       const viewportHeight = window.innerHeight;
 
       /*
-       * The section begins when its top reaches
-       * the top of the viewport.
+       * The video becomes active when its section
+       * reaches the viewport.
        */
-      const sectionStarted = rect.top <= 0;
+      const started = rect.top <= 0;
 
-      /*
-       * The section finishes when its bottom
-       * reaches the bottom of the viewport.
-       */
-      const sectionFinished =
+      const ended =
         rect.bottom <= viewportHeight;
 
-      const active =
-        sectionStarted && !sectionFinished;
+      if (started && !ended) {
+        frame.classList.add("is-active");
 
-      setIsActive(active);
+        if (video.duration) {
+          const scrollDistance =
+            section.offsetHeight - viewportHeight;
 
-      /*
-       * Calculate video progress ONLY while
-       * the video section is active.
-       */
-      if (active && video.duration) {
-        const scrollDistance =
-          section.offsetHeight - viewportHeight;
+          const progress = Math.max(
+            0,
+            Math.min(
+              1,
+              -rect.top / scrollDistance
+            )
+          );
 
-        const passed = -rect.top;
-
-        const progress = Math.max(
-          0,
-          Math.min(
-            1,
-            passed / scrollDistance
-          )
-        );
-
-        video.currentTime =
-          progress * video.duration;
+          video.currentTime =
+            progress * video.duration;
+        }
+      } else {
+        frame.classList.remove("is-active");
       }
 
-      frame = 0;
+      raf = 0;
     };
 
-    const handleScroll = () => {
-      if (frame) {
-        return;
-      }
+    const onScroll = () => {
+      if (raf) return;
 
-      frame = requestAnimationFrame(update);
-    };
-
-    const handleResize = () => {
-      handleScroll();
+      raf = requestAnimationFrame(update);
     };
 
     video.pause();
 
+    video.addEventListener(
+      "loadedmetadata",
+      onScroll
+    );
+
     window.addEventListener(
       "scroll",
-      handleScroll,
+      onScroll,
       { passive: true }
     );
 
     window.addEventListener(
       "resize",
-      handleResize
+      onScroll
     );
 
-    video.addEventListener(
-      "loadedmetadata",
-      handleScroll
-    );
-
-    handleScroll();
+    onScroll();
 
     return () => {
+      video.removeEventListener(
+        "loadedmetadata",
+        onScroll
+      );
+
       window.removeEventListener(
         "scroll",
-        handleScroll
+        onScroll
       );
 
       window.removeEventListener(
         "resize",
-        handleResize
+        onScroll
       );
 
-      video.removeEventListener(
-        "loadedmetadata",
-        handleScroll
-      );
-
-      if (frame) {
-        cancelAnimationFrame(frame);
+      if (raf) {
+        cancelAnimationFrame(raf);
       }
     };
   }, []);
@@ -132,11 +115,8 @@ export default function ScrollVideo({
       className="scroll-video-section"
     >
       <div
-        className={`scroll-video-frame ${
-          isActive
-            ? "scroll-video-frame-active"
-            : ""
-        }`}
+        ref={frameRef}
+        className="scroll-video-frame"
       >
         <video
           ref={videoRef}
@@ -147,19 +127,14 @@ export default function ScrollVideo({
         />
 
         <div className="scroll-video-overlay">
-
           <div className="scroll-video-label">
             <span>02</span>
-
-            <p>
-              HOME TOUR
-            </p>
+            <p>HOME TOUR</p>
           </div>
 
           <div className="scroll-video-scroll-text">
             SCROLL TO EXPLORE
           </div>
-
         </div>
       </div>
     </section>

@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://127.0.0.1:8000";
+
 type ClientStatus =
   | "New"
   | "Contacted"
@@ -31,17 +35,21 @@ const statusOptions: ClientStatus[] = [
 ];
 
 export default function ClientsAdminPage() {
-    const [clients, setClients] = useState<Client[]>([]);
-    const [filter, setFilter] = useState<"All" | ClientStatus>("All");
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [selectedClient, setSelectedClient] = useState<Client | null>(null);    ;
+  const [clients, setClients] = useState<Client[]>([]);
+  const [filter, setFilter] = useState<"All" | ClientStatus>("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedClient, setSelectedClient] =
+    useState<Client | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
+        setLoading(true);
+        setError("");
+
         const response = await fetch(
-          "http://127.0.0.1:8000/api/contact/"
+          `${API_URL}/api/contact/`
         );
 
         if (!response.ok) {
@@ -49,9 +57,10 @@ export default function ClientsAdminPage() {
         }
 
         const data = await response.json();
-
         setClients(data);
       } catch (error) {
+        console.error("Failed to load clients:", error);
+
         setError(
           error instanceof Error
             ? error.message
@@ -68,172 +77,335 @@ export default function ClientsAdminPage() {
   const filteredClients =
     filter === "All"
       ? clients
-      : clients.filter((client) => client.status === filter);
+      : clients.filter(
+          (client) => client.status === filter
+        );
 
-const updateStatus = async (
-  clientId: number,
-  status: ClientStatus
-) => {
-  try {
-    const response = await fetch(
-      `http://127.0.0.1:8000/api/contact/${clientId}/status?status=${encodeURIComponent(
-        status
-      )}`,
-      {
-        method: "PATCH",
+  const getStatusCount = (status: ClientStatus) =>
+    clients.filter(
+      (client) => client.status === status
+    ).length;
+
+  const updateStatus = async (
+    clientId: number,
+    status: ClientStatus
+  ) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/contact/${clientId}/status?status=${encodeURIComponent(
+          status
+        )}`,
+        {
+          method: "PATCH",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update client status");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Failed to update client status");
+      const data = await response.json();
+
+      setClients((currentClients) =>
+        currentClients.map((client) =>
+          client.id === clientId
+            ? {
+                ...client,
+                status: data.status as ClientStatus,
+              }
+            : client
+        )
+      );
+
+      setSelectedClient((currentClient) =>
+        currentClient &&
+        currentClient.id === clientId
+          ? {
+              ...currentClient,
+              status: data.status as ClientStatus,
+            }
+          : currentClient
+      );
+    } catch (error) {
+      console.error("Status update failed:", error);
+      alert(
+        "Unable to update client status. Please try again."
+      );
     }
+  };
 
-    const data = await response.json();
-
-    setClients((currentClients) =>
-      currentClients.map((client) =>
-        client.id === clientId
-          ? { ...client, status: data.status as ClientStatus }
-          : client
-      )
+  const exportClientsToExcel = () => {
+    window.open(
+      `${API_URL}/api/contact/export`,
+      "_blank"
     );
-  } catch (error) {
-    console.error("Status update failed:", error);
-    alert("Unable to update client status. Please try again.");
-  }
-};
+  };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  };
+
+  const getStatusClass = (status: ClientStatus) => {
+    switch (status) {
+      case "New":
+        return "tl-client-status-new";
+      case "Contacted":
+        return "tl-client-status-contacted";
+      case "Site Visit":
+        return "tl-client-status-site";
+      case "Completed":
+        return "tl-client-status-completed";
+      default:
+        return "";
+    }
   };
 
   return (
-    <main className="admin-page">
-      {/* SIDEBAR */}
-      <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <div className="admin-brand-mark">TL</div>
+    <main className="admin-page tl-clients-page">
+
+      {/* =====================================================
+          SIDEBAR
+      ====================================================== */}
+
+      <aside className="tl-clients-sidebar">
+
+        <div className="tl-sidebar-brand">
+
+          <div className="tl-brand-mark">
+             <img src="/images/logo.png" alt="Tara Living" />
+          </div>
 
           <div>
             <h1>TARA LIVING</h1>
             <span>ADMIN</span>
           </div>
+
         </div>
 
-        <nav className="admin-nav">
-          <Link href="/admin" className="admin-nav-item">
-            <span className="admin-nav-icon">⌂</span>
-            <span>Dashboard</span>
+        <nav className="tl-sidebar-nav">
+
+          <Link
+            href="/admin"
+            className="tl-sidebar-link"
+          >
+            <span>⌂</span>
+            Dashboard
           </Link>
 
           <Link
             href="/admin/clients"
-            className="admin-nav-item active"
+            className="tl-sidebar-link active"
           >
-            <span className="admin-nav-icon">◉</span>
-            <span>Clients</span>
+            <span>◉</span>
+            Clients
           </Link>
 
           <Link
             href="/admin/projects"
-            className="admin-nav-item"
+            className="tl-sidebar-link"
           >
-            <span className="admin-nav-icon">▣</span>
-            <span>Projects</span>
+            <span>▣</span>
+            Projects
           </Link>
 
-          <button className="admin-nav-item" type="button">
-            <span className="admin-nav-icon">✦</span>
-            <span>Services</span>
-          </button>
+          <Link
+            href="/admin/services"
+            className="tl-sidebar-link"
+          >
+            <span>✦</span>
+            Services
+          </Link>
 
-          <button className="admin-nav-item" type="button">
-            <span className="admin-nav-icon">♡</span>
-            <span>Testimonials</span>
-          </button>
+          <Link
+            href="/admin/testimonials"
+            className="tl-sidebar-link"
+          >
+            <span>♡</span>
+            Testimonials
+          </Link>
 
-          <button className="admin-nav-item" type="button">
-            <span className="admin-nav-icon">↓</span>
-            <span>Export</span>
-          </button>
         </nav>
 
-        <div className="admin-sidebar-footer">
-          <span>© {new Date().getFullYear()} Tara Living</span>
-          <span>Interior Design Studio</span>
+        <div className="tl-sidebar-bottom">
+          <span>
+            © {new Date().getFullYear()} Tara Living
+          </span>
+          <span>
+            Interior Design Studio
+          </span>
         </div>
+
       </aside>
 
-      {/* MAIN */}
-      <section className="admin-main">
-        <header className="admin-topbar">
+
+      {/* =====================================================
+          CONTENT
+      ====================================================== */}
+
+      <section className="admin-main tl-clients-content">
+
+        {/* HEADER */}
+
+        <header className="tl-clients-header">
+
           <div>
-            <p className="admin-eyebrow">TARA LIVING</p>
-            <h2>Clients</h2>
+            <p className="tl-small-label">
+              TARA LIVING / CLIENT MANAGEMENT
+            </p>
+
+            <h2>
+              Clients
+            </h2>
           </div>
+
+          <div className="tl-header-number">
+            <span>ACTIVE DATABASE</span>
+            <strong>
+              {clients.length}
+            </strong>
+          </div>
+
         </header>
 
-        {/* INTRO */}
-        <section className="admin-welcome">
-          <div>
-            <p className="admin-eyebrow">CLIENT MANAGEMENT</p>
 
-            <h3>
-              Every inquiry,
+        {/* HERO */}
+
+        <section className="tl-client-hero">
+
+          <div className="tl-client-hero-copy">
+
+            <p className="tl-small-label">
+              CONSULTATION INQUIRIES
+            </p>
+
+            <h1>
+              Every inquiry.
               <br />
-              <em>one place.</em>
-            </h3>
+              <em>One place.</em>
+            </h1>
+
+            <p>
+              Keep track of every consultation request,
+              understand where each client is in their
+              journey, and move projects forward.
+            </p>
+
           </div>
 
-          <p className="admin-welcome-text">
-            Track consultation requests and move each client
-            through the project journey.
-          </p>
-        </section>
-
-        {/* CLIENT COUNTS */}
-        <section className="admin-client-summary">
           <button
             type="button"
-            className={`admin-filter-card ${
-              filter === "All" ? "active" : ""
+            className="tl-export-button"
+            onClick={exportClientsToExcel}
+          >
+            <span>↓</span>
+            Export Excel
+          </button>
+
+          <div className="tl-hero-decoration">
+            <span>TL</span>
+          </div>
+
+        </section>
+
+
+        {/* SUMMARY */}
+
+        <section className="tl-client-stats">
+
+          <button
+            type="button"
+            className={`tl-stat-card ${
+              filter === "All"
+                ? "selected"
+                : ""
             }`}
             onClick={() => setFilter("All")}
           >
             <span>ALL CLIENTS</span>
             <strong>{clients.length}</strong>
+            <small>Every inquiry</small>
           </button>
 
-          {statusOptions.map((status) => {
-            const count = clients.filter(
-              (client) => client.status === status
-            ).length;
+          <button
+            type="button"
+            className={`tl-stat-card ${
+              filter === "New"
+                ? "selected"
+                : ""
+            }`}
+            onClick={() => setFilter("New")}
+          >
+            <span>NEW</span>
+            <strong>{getStatusCount("New")}</strong>
+            <small>Needs attention</small>
+          </button>
 
-            return (
-              <button
-                key={status}
-                type="button"
-                className={`admin-filter-card ${
-                  filter === status ? "active" : ""
-                }`}
-                onClick={() => setFilter(status)}
-              >
-                <span>{status.toUpperCase()}</span>
-                <strong>{count}</strong>
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            className={`tl-stat-card ${
+              filter === "Contacted"
+                ? "selected"
+                : ""
+            }`}
+            onClick={() => setFilter("Contacted")}
+          >
+            <span>CONTACTED</span>
+            <strong>
+              {getStatusCount("Contacted")}
+            </strong>
+            <small>Conversation started</small>
+          </button>
+
+          <button
+            type="button"
+            className={`tl-stat-card ${
+              filter === "Site Visit"
+                ? "selected"
+                : ""
+            }`}
+            onClick={() => setFilter("Site Visit")}
+          >
+            <span>SITE VISIT</span>
+            <strong>
+              {getStatusCount("Site Visit")}
+            </strong>
+            <small>In progress</small>
+          </button>
+
+          <button
+            type="button"
+            className={`tl-stat-card ${
+              filter === "Completed"
+                ? "selected"
+                : ""
+            }`}
+            onClick={() => setFilter("Completed")}
+          >
+            <span>COMPLETED</span>
+            <strong>
+              {getStatusCount("Completed")}
+            </strong>
+            <small>Finished inquiries</small>
+          </button>
+
         </section>
 
+
         {/* CLIENT LIST */}
-        <section className="admin-section">
-          <div className="admin-section-header">
+
+        <section className="tl-client-list-section">
+
+          <div className="tl-list-header">
+
             <div>
-              <p className="admin-eyebrow">
+              <p className="tl-small-label">
                 {filter === "All"
                   ? "ALL CLIENTS"
                   : filter.toUpperCase()}
@@ -246,220 +418,389 @@ const updateStatus = async (
                   : "Clients"}
               </h3>
             </div>
+
+            <div className="tl-list-line" />
+
           </div>
 
+
+          {/* LOADING */}
+
           {loading && (
-            <div className="admin-empty-state">
-              Loading clients...
+            <div className="tl-client-empty">
+              <div className="tl-loading-circle" />
+              <p>Loading client inquiries...</p>
             </div>
           )}
 
-          {error && (
-            <div className="admin-empty-state admin-error">
-              {error}
+
+          {/* ERROR */}
+
+          {!loading && error && (
+            <div className="tl-client-empty">
+              <div className="tl-empty-icon">!</div>
+              <h4>Unable to load clients</h4>
+              <p>{error}</p>
             </div>
           )}
+
+
+          {/* EMPTY */}
 
           {!loading &&
             !error &&
             filteredClients.length === 0 && (
-              <div className="admin-empty-state">
-                No clients found in this category.
+              <div className="tl-client-empty">
+                <div className="tl-empty-icon">
+                  ◌
+                </div>
+
+                <h4>
+                  No inquiries here
+                </h4>
+
+                <p>
+                  There are no clients in this
+                  category yet.
+                </p>
               </div>
             )}
+
+
+          {/* CLIENT CARDS */}
 
           {!loading &&
             !error &&
             filteredClients.length > 0 && (
-              <div className="admin-client-table">
-                {filteredClients.map((client) => (
-                  <article
-                    key={client.id}
-                    className="admin-client-row"
-                  >
-                    <div className="admin-client-main">
-                      <div className="admin-client-avatar">
-                        {client.name
-                          .charAt(0)
-                          .toUpperCase()}
+
+              <div className="tl-client-cards">
+
+                {filteredClients.map(
+                  (client, index) => (
+
+                    <article
+                      key={client.id}
+                      className="tl-client-card"
+                    >
+
+                      {/* NUMBER */}
+
+                      <div className="tl-client-index">
+                        {String(index + 1).padStart(
+                          2,
+                          "0"
+                        )}
                       </div>
 
-                      <div>
-                        <h4>{client.name}</h4>
-                        <p>{client.email}</p>
+
+                      {/* PROFILE */}
+
+                      <div className="tl-client-profile">
+
+                        <div className="tl-client-avatar">
+                          {client.name
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+
+                        <div>
+                          <h4>
+                            {client.name}
+                          </h4>
+
+                          <p>
+                            {client.email}
+                          </p>
+                        </div>
+
                       </div>
-                    </div>
 
-                    <div className="admin-client-detail">
-                      <span>CONTACT</span>
-                      <strong>{client.phone}</strong>
-                    </div>
 
-                    <div className="admin-client-detail">
-                      <span>LOCATION</span>
-                      <strong>{client.city}</strong>
-                    </div>
+                      {/* DETAILS */}
 
-                    <div className="admin-client-detail">
-                      <span>PROJECT</span>
-                      <strong>{client.project_type}</strong>
-                    </div>
+                      <div className="tl-client-info">
 
-                    <div className="admin-client-detail">
-                      <span>BUDGET</span>
-                      <strong>{client.budget}</strong>
-                    </div>
+                        <div>
+                          <span>CONTACT</span>
+                          <strong>
+                            {client.phone || "—"}
+                          </strong>
+                        </div>
 
-                    <div className="admin-client-status">
-                     <select
-                       value={client.status}
-                       onChange={(event) =>
-                         updateStatus(
-                           client.id,
-                           event.target.value as ClientStatus
-                         )
-                       }
-                     >
-                       {statusOptions.map((status) => (
-                         <option
-                           key={status}
-                           value={status}
-                         >
-                           {status}
-                         </option>
-                       ))}
-                     </select>
-                   
-                     <small>
-                       {formatDate(client.created_at)}
-                     </small>
-                   
-                     <button
-                      type="button"
-                      className="admin-client-view"
-                      onClick={() => setSelectedClient(client)}
-                     >
-                       View <span>↗</span>
-                     </button>                     
-                    </div>                   
-                  </article>
-                ))}
+                        <div>
+                          <span>LOCATION</span>
+                          <strong>
+                            {client.city || "—"}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>PROJECT</span>
+                          <strong>
+                            {client.project_type ||
+                              "—"}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>BUDGET</span>
+                          <strong>
+                            {client.budget || "—"}
+                          </strong>
+                        </div>
+
+                      </div>
+
+
+                      {/* ACTION */}
+
+                      <div className="tl-client-actions">
+
+                        <div>
+
+                          <select
+                            className={`tl-client-status ${getStatusClass(
+                              client.status
+                            )}`}
+                            value={
+                              client.status
+                            }
+                            onChange={(event) =>
+                              updateStatus(
+                                client.id,
+                                event.target
+                                  .value as ClientStatus
+                              )
+                            }
+                          >
+
+                            {statusOptions.map(
+                              (status) => (
+                                <option
+                                  key={status}
+                                  value={status}
+                                >
+                                  {status}
+                                </option>
+                              )
+                            )}
+
+                          </select>
+
+                          <small>
+                            {formatDate(
+                              client.created_at
+                            )}
+                          </small>
+
+                        </div>
+
+
+                        <button
+                          type="button"
+                          className="tl-view-client"
+                          onClick={() =>
+                            setSelectedClient(
+                              client
+                            )
+                          }
+                        >
+                          View
+                          <span>↗</span>
+                        </button>
+
+                      </div>
+
+                    </article>
+
+                  )
+                )}
+
               </div>
+
             )}
+
         </section>
 
+
+        {/* =====================================================
+            MODAL
+        ====================================================== */}
+
         {selectedClient && (
-  <div
-    className="admin-modal-overlay"
-    onClick={() => setSelectedClient(null)}
-  >
-    <div
-      className="admin-client-modal"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <div className="admin-modal-header">
-        <div>
-          <p className="admin-eyebrow">CLIENT INQUIRY</p>
-          <h3>{selectedClient.name}</h3>
-        </div>
 
-        <button
-          type="button"
-          className="admin-modal-close"
-          onClick={() => setSelectedClient(null)}
-        >
-          ×
-        </button>
-      </div>
+          <div
+            className="tl-client-modal-overlay"
+            onClick={() =>
+              setSelectedClient(null)
+            }
+          >
 
-      <div className="admin-modal-status">
-        <span>STATUS</span>
+            <div
+              className="tl-client-modal"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
 
-        <select
-          value={selectedClient.status}
-          onChange={async (event) => {
-            const newStatus =
-              event.target.value as ClientStatus;
+              <div className="tl-modal-top">
 
-            await updateStatus(
-              selectedClient.id,
-              newStatus
-            );
+                <div>
 
-            setSelectedClient({
-              ...selectedClient,
-              status: newStatus,
-            });
-          }}
-        >
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </div>
+                  <p className="tl-small-label">
+                    CLIENT INQUIRY
+                  </p>
 
-      <div className="admin-modal-grid">
-        <div>
-          <span>EMAIL</span>
-          <strong>{selectedClient.email}</strong>
-        </div>
+                  <h3>
+                    {selectedClient.name}
+                  </h3>
 
-        <div>
-          <span>PHONE</span>
-          <strong>{selectedClient.phone}</strong>
-        </div>
+                  <span>
+                    {selectedClient.email}
+                  </span>
 
-        <div>
-          <span>LOCATION</span>
-          <strong>{selectedClient.city}</strong>
-        </div>
+                </div>
 
-        <div>
-          <span>PROPERTY TYPE</span>
-          <strong>{selectedClient.property_type}</strong>
-        </div>
+                <button
+                  type="button"
+                  className="tl-modal-close"
+                  onClick={() =>
+                    setSelectedClient(null)
+                  }
+                >
+                  ×
+                </button>
 
-        <div>
-          <span>PROJECT TYPE</span>
-          <strong>{selectedClient.project_type}</strong>
-        </div>
+              </div>
 
-        <div>
-          <span>BUDGET</span>
-          <strong>{selectedClient.budget}</strong>
-        </div>
-      </div>
 
-      <div className="admin-modal-message">
-        <span>CLIENT MESSAGE</span>
-        <p>{selectedClient.message}</p>
-      </div>
+              <div className="tl-modal-status-row">
 
-      <div className="admin-modal-footer">
-        <span>
-          Inquiry received{" "}
-          {formatDate(selectedClient.created_at)}
-        </span>
+                <span>PROJECT STATUS</span>
 
-        <button
-          type="button"
-          onClick={() => setSelectedClient(null)}
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+                <select
+                  value={
+                    selectedClient.status
+                  }
+                  onChange={(event) =>
+                    updateStatus(
+                      selectedClient.id,
+                      event.target
+                        .value as ClientStatus
+                    )
+                  }
+                >
 
-        {/* FOOTER */}
-        <footer className="admin-footer">
+                  {statusOptions.map(
+                    (status) => (
+                      <option
+                        key={status}
+                        value={status}
+                      >
+                        {status}
+                      </option>
+                    )
+                  )}
+
+                </select>
+
+              </div>
+
+
+              <div className="tl-modal-details">
+
+                <div>
+                  <span>PHONE</span>
+                  <strong>
+                    {selectedClient.phone || "—"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>LOCATION</span>
+                  <strong>
+                    {selectedClient.city || "—"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>PROPERTY TYPE</span>
+                  <strong>
+                    {selectedClient.property_type ||
+                      "—"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>PROJECT TYPE</span>
+                  <strong>
+                    {selectedClient.project_type ||
+                      "—"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>BUDGET</span>
+                  <strong>
+                    {selectedClient.budget || "—"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>RECEIVED</span>
+                  <strong>
+                    {formatDate(
+                      selectedClient.created_at
+                    )}
+                  </strong>
+                </div>
+
+              </div>
+
+
+              <div className="tl-modal-message">
+
+                <span>CLIENT MESSAGE</span>
+
+                <p>
+                  {selectedClient.message ||
+                    "No message was provided with this inquiry."}
+                </p>
+
+              </div>
+
+
+              <div className="tl-modal-footer">
+
+                <span>
+                  TARA LIVING / CLIENT MANAGEMENT
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedClient(null)
+                  }
+                >
+                  Close
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+
+        <footer className="tl-client-footer">
           <span>TARA LIVING</span>
           <span>Client Management</span>
         </footer>
+
       </section>
+
     </main>
   );
 }

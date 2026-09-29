@@ -1,332 +1,705 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type Inquiry = {
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://127.0.0.1:8000";
+
+type Client = {
   id: number;
   name: string;
   email: string;
-  phone: string;
   city: string;
-  property_type: string;
   project_type: string;
   budget: string;
-  message: string;
+  status: string;
   created_at: string;
 };
 
-const menuItems = [
-  { label: "Dashboard", icon: "⌂" },
-  { label: "Clients", icon: "◉" },
-  { label: "Projects", icon: "▣" },
-  { label: "Services", icon: "✦" },
-  { label: "Testimonials", icon: "♡" },
-  { label: "Export", icon: "↓" },
-];
-
-export default function AdminPage() {
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+export default function AdminDashboard() {
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchInquiries = async () => {
+    const fetchClients = async () => {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/contact/"
+          `${API_URL}/api/contact/`
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch inquiries");
+          throw new Error("Failed to load clients");
         }
 
         const data = await response.json();
-        setInquiries(data);
+
+        setClients(data);
       } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load inquiries"
+        console.error(
+          "Dashboard client loading failed:",
+          error
         );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchInquiries();
+    fetchClients();
   }, []);
 
+  const newClients = clients.filter(
+    (client) => client.status === "New"
+  ).length;
+
+  const contactedClients = clients.filter(
+    (client) => client.status === "Contacted"
+  ).length;
+
+  const siteVisitClients = clients.filter(
+    (client) => client.status === "Site Visit"
+  ).length;
+
+  const completedClients = clients.filter(
+    (client) => client.status === "Completed"
+  ).length;
+
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   return (
     <main className="admin-page">
+
       {/* SIDEBAR */}
+
       <aside className="admin-sidebar">
+
         <div className="admin-brand">
-          <div className="admin-brand-mark">TL</div>
+
+          <div className="admin-brand-mark">
+            <img src="/images/logo.png" alt="Tara Living" />
+          </div>
 
           <div>
             <h1>TARA LIVING</h1>
             <span>ADMIN</span>
           </div>
+
         </div>
+
 
         <nav className="admin-nav">
-          {menuItems.map((item, index) => (
-            <button
-              key={item.label}
-              className={`admin-nav-item ${
-                index === 0 ? "active" : ""
-              }`}
-              type="button"
-            >
-              <span className="admin-nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+
+          <Link
+            href="/admin"
+            className="admin-nav-item active"
+          >
+            <span className="admin-nav-icon">
+              ⌂
+            </span>
+
+            <span>Dashboard</span>
+          </Link>
+
+
+          <Link
+            href="/admin/clients"
+            className="admin-nav-item"
+          >
+            <span className="admin-nav-icon">
+              ◉
+            </span>
+
+            <span>Clients</span>
+          </Link>
+
+
+          <Link
+            href="/admin/projects"
+            className="admin-nav-item"
+          >
+            <span className="admin-nav-icon">
+              ▣
+            </span>
+
+            <span>Projects</span>
+          </Link>
+
+
+          <Link
+            href="/admin/services"
+            className="admin-nav-item"
+          >
+            <span className="admin-nav-icon">
+              ✦
+            </span>
+
+            <span>Services</span>
+          </Link>
+
+
+          <Link
+            href="/admin/testimonials"
+            className="admin-nav-item"
+          >
+            <span className="admin-nav-icon">
+              ♡
+            </span>
+
+            <span>Testimonials</span>
+          </Link>
+
         </nav>
 
+
         <div className="admin-sidebar-footer">
-          <span>© {new Date().getFullYear()} Tara Living</span>
-          <span>Interior Design Studio</span>
+
+          <span>
+            © {new Date().getFullYear()} Tara Living
+          </span>
+
+          <span>
+            Interior Design Studio
+          </span>
+
         </div>
+
       </aside>
 
-      {/* MAIN CONTENT */}
+
+      {/* MAIN */}
+
       <section className="admin-main">
-        {/* TOP BAR */}
+
+
+        {/* TOPBAR */}
+
         <header className="admin-topbar">
+
           <div>
-            <p className="admin-eyebrow">TARA LIVING</p>
-            <h2>Dashboard</h2>
+
+            <p className="admin-eyebrow">
+              TARA LIVING / ADMIN
+            </p>
+
+            <h2>
+              Dashboard
+            </h2>
+
           </div>
 
-          <div className="admin-topbar-right">
-            <span className="admin-status-dot" />
-            <span>System Online</span>
-          </div>
+          <span className="dashboard-date">
+            {new Date().toLocaleDateString(
+              "en-IN",
+              {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              }
+            )}
+          </span>
+
         </header>
 
-        {/* WELCOME */}
-        <section className="admin-welcome">
-          <div>
-            <p className="admin-eyebrow">OVERVIEW</p>
 
-            <h3>
-              Welcome to your
+        {/* HERO */}
+
+        <section className="dashboard-hero">
+
+          <div className="dashboard-hero-content">
+
+            <p className="admin-eyebrow">
+              STUDIO OVERVIEW
+            </p>
+
+            <h1>
+              Welcome back,
               <br />
-              <em>studio dashboard.</em>
-            </h3>
+              <em>Tara Living.</em>
+            </h1>
+
+            <p>
+              Manage your clients, projects,
+              services and testimonials from
+              one place.
+            </p>
+
           </div>
 
-          <p className="admin-welcome-text">
-            Manage client inquiries, projects, services and
-            testimonials from one place.
-          </p>
+
+          <div className="dashboard-hero-circle">
+
+            <span>
+              TOTAL
+              <br />
+              INQUIRIES
+            </span>
+
+            <strong>
+              {loading
+                ? "—"
+                : clients.length}
+            </strong>
+
+          </div>
+
         </section>
+
 
         {/* STAT CARDS */}
-        <section className="admin-stats">
-          <article className="admin-stat-card">
-            <div className="admin-stat-top">
-              <span>CLIENTS</span>
-              <span>01</span>
-            </div>
 
-            <strong>{inquiries.length}</strong>
+        <section className="dashboard-stats">
 
-            <p>Total inquiries received</p>
-          </article>
 
-          <article className="admin-stat-card">
-            <div className="admin-stat-top">
-              <span>NEW</span>
-              <span>02</span>
-            </div>
+          <Link
+            href="/admin/clients"
+            className="dashboard-stat dashboard-stat-dark"
+          >
 
-            <strong>{inquiries.length}</strong>
+            <span>
+              TOTAL CLIENTS
+            </span>
 
-            <p>Awaiting first contact</p>
-          </article>
+            <strong>
+              {loading
+                ? "—"
+                : clients.length}
+            </strong>
 
-          <article className="admin-stat-card">
-            <div className="admin-stat-top">
-              <span>PROJECTS</span>
-              <span>03</span>
-            </div>
+            <small>
+              All inquiries
+            </small>
 
-            <strong>4</strong>
+            <b>↗</b>
 
-            <p>Projects currently displayed</p>
-          </article>
+          </Link>
 
-          <article className="admin-stat-card">
-            <div className="admin-stat-top">
-              <span>SERVICES</span>
-              <span>04</span>
-            </div>
 
-            <strong>4</strong>
+          <Link
+            href="/admin/clients"
+            className="dashboard-stat"
+          >
 
-            <p>Service categories</p>
-          </article>
+            <span>
+              NEW
+            </span>
+
+            <strong>
+              {loading
+                ? "—"
+                : newClients}
+            </strong>
+
+            <small>
+              Needs attention
+            </small>
+
+            <b>↗</b>
+
+          </Link>
+
+
+          <Link
+            href="/admin/clients"
+            className="dashboard-stat"
+          >
+
+            <span>
+              SITE VISITS
+            </span>
+
+            <strong>
+              {loading
+                ? "—"
+                : siteVisitClients}
+            </strong>
+
+            <small>
+              In progress
+            </small>
+
+            <b>↗</b>
+
+          </Link>
+
+
+          <Link
+            href="/admin/clients"
+            className="dashboard-stat"
+          >
+
+            <span>
+              COMPLETED
+            </span>
+
+            <strong>
+              {loading
+                ? "—"
+                : completedClients}
+            </strong>
+
+            <small>
+              Completed inquiries
+            </small>
+
+            <b>↗</b>
+
+          </Link>
+
+
         </section>
 
-        {/* RECENT INQUIRIES */}
-        <section className="admin-section">
-          <div className="admin-section-header">
-            <div>
-              <p className="admin-eyebrow">CLIENTS</p>
-              <h3>Recent Client Inquiries</h3>
+
+        {/* MAIN CONTENT */}
+
+        <section className="dashboard-main-grid">
+
+
+          {/* RECENT CLIENTS */}
+
+          <div className="dashboard-card">
+
+            <div className="dashboard-card-header">
+
+              <div>
+
+                <p className="admin-eyebrow">
+                  RECENT INQUIRIES
+                </p>
+
+                <h3>
+                  Latest clients
+                </h3>
+
+              </div>
+
+              <Link
+                href="/admin/clients"
+                className="dashboard-view-all"
+              >
+                View all ↗
+              </Link>
+
             </div>
 
-            <button className="admin-text-button" type="button">
-              View All <span>↗</span>
-            </button>
-          </div>
 
-          {loading && (
-            <div className="admin-empty-state">
-              Loading inquiries...
-            </div>
-          )}
+            {loading ? (
 
-          {error && (
-            <div className="admin-empty-state admin-error">
-              {error}
-            </div>
-          )}
+              <div className="dashboard-empty">
+                Loading clients...
+              </div>
 
-          {!loading && !error && inquiries.length === 0 && (
-            <div className="admin-empty-state">
-              No inquiries received yet.
-            </div>
-          )}
+            ) : clients.length === 0 ? (
 
-          {!loading && !error && inquiries.length > 0 && (
-            <div className="admin-inquiries">
-              {inquiries.slice(0, 5).map((inquiry) => (
-                <article
-                  key={inquiry.id}
-                  className="admin-inquiry-row"
-                >
-                  <div className="admin-client-info">
-                    <div className="admin-client-avatar">
-                      {inquiry.name.charAt(0).toUpperCase()}
+              <div className="dashboard-empty">
+                No client inquiries yet.
+              </div>
+
+            ) : (
+
+              <div className="dashboard-client-list">
+
+                {clients
+                  .slice(0, 6)
+                  .map((client, index) => (
+
+                    <div
+                      key={client.id}
+                      className="dashboard-client-row"
+                    >
+
+                      <span className="dashboard-client-number">
+                        {String(index + 1).padStart(
+                          2,
+                          "0"
+                        )}
+                      </span>
+
+
+                      <div className="dashboard-client-avatar">
+                        {client.name
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+
+
+                      <div className="dashboard-client-details">
+
+                        <strong>
+                          {client.name}
+                        </strong>
+
+                        <span>
+                          {client.project_type ||
+                            "Interior Project"}
+                        </span>
+
+                      </div>
+
+
+                      <span className="dashboard-client-city">
+                        {client.city || "—"}
+                      </span>
+
+
+                      <span
+                        className={`dashboard-status ${
+                          client.status
+                            .toLowerCase()
+                            .replace(
+                              /\s+/g,
+                              "-"
+                            )
+                        }`}
+                      >
+                        {client.status}
+                      </span>
+
+
+                      <small>
+                        {formatDate(
+                          client.created_at
+                        )}
+                      </small>
+
                     </div>
 
-                    <div>
-                      <h4>{inquiry.name}</h4>
-                      <p>{inquiry.email}</p>
-                    </div>
-                  </div>
+                  ))}
 
-                  <div className="admin-inquiry-location">
-                    <span>LOCATION</span>
-                    <strong>{inquiry.city}</strong>
-                  </div>
+              </div>
 
-                  <div className="admin-inquiry-project">
-                    <span>PROJECT</span>
-                    <strong>{inquiry.project_type}</strong>
-                  </div>
+            )}
 
-                  <div className="admin-inquiry-budget">
-                    <span>BUDGET</span>
-                    <strong>{inquiry.budget}</strong>
-                  </div>
-
-                  <div className="admin-inquiry-meta">
-                    <span className="admin-status new">
-                      NEW
-                    </span>
-
-                    <small>
-                      {formatDate(inquiry.created_at)}
-                    </small>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* QUICK ACTIONS */}
-        <section className="admin-section admin-actions-section">
-          <div className="admin-section-header">
-            <div>
-              <p className="admin-eyebrow">QUICK ACTIONS</p>
-              <h3>Manage your studio</h3>
-            </div>
           </div>
 
-          <div className="admin-actions">
-            <button className="admin-action-card" type="button">
-              <span className="admin-action-number">01</span>
 
-              <div>
-                <strong>Add Project</strong>
-                <p>
-                  Add a new interior project to your portfolio.
-                </p>
-              </div>
+          {/* QUICK ACTIONS */}
 
-              <span className="admin-action-arrow">↗</span>
-            </button>
+          <div className="dashboard-card dashboard-actions-card">
 
-            <button className="admin-action-card" type="button">
-              <span className="admin-action-number">02</span>
+            <p className="admin-eyebrow">
+              QUICK ACTIONS
+            </p>
 
-              <div>
-                <strong>Manage Services</strong>
-                <p>
-                  Add or update the services offered by Tara Living.
-                </p>
-              </div>
+            <h3>
+              Manage your studio
+            </h3>
 
-              <span className="admin-action-arrow">↗</span>
-            </button>
 
-            <button className="admin-action-card" type="button">
-              <span className="admin-action-number">03</span>
+            <div className="dashboard-actions-list">
 
-              <div>
-                <strong>Testimonials</strong>
-                <p>
-                  Manage client reviews displayed on the website.
-                </p>
-              </div>
 
-              <span className="admin-action-arrow">↗</span>
-            </button>
+              <Link
+                href="/admin/projects/add"
+                className="dashboard-action"
+              >
 
-            <button className="admin-action-card" type="button">
-              <span className="admin-action-number">04</span>
+                <span>
+                  01
+                </span>
 
-              <div>
-                <strong>Export Excel</strong>
-                <p>
-                  Download client inquiry data as an Excel file.
-                </p>
-              </div>
+                <div>
+                  <strong>
+                    Add Project
+                  </strong>
 
-              <span className="admin-action-arrow">↓</span>
-            </button>
+                  <small>
+                    Add a new portfolio project
+                  </small>
+                </div>
+
+                <b>
+                  ↗
+                </b>
+
+              </Link>
+
+
+              <Link
+                href="/admin/services/add"
+                className="dashboard-action"
+              >
+
+                <span>
+                  02
+                </span>
+
+                <div>
+                  <strong>
+                    Add Service
+                  </strong>
+
+                  <small>
+                    Update your studio services
+                  </small>
+                </div>
+
+                <b>
+                  ↗
+                </b>
+
+              </Link>
+
+
+              <Link
+                href="/admin/testimonials/add"
+                className="dashboard-action"
+              >
+
+                <span>
+                  03
+                </span>
+
+                <div>
+                  <strong>
+                    Add Testimonial
+                  </strong>
+
+                  <small>
+                    Share a client experience
+                  </small>
+                </div>
+
+                <b>
+                  ↗
+                </b>
+
+              </Link>
+
+
+              <Link
+                href="/admin/clients"
+                className="dashboard-action"
+              >
+
+                <span>
+                  04
+                </span>
+
+                <div>
+                  <strong>
+                    View Clients
+                  </strong>
+
+                  <small>
+                    Manage consultation requests
+                  </small>
+                </div>
+
+                <b>
+                  ↗
+                </b>
+
+              </Link>
+
+
+            </div>
+
           </div>
+
         </section>
+
+
+        {/* STATUS OVERVIEW */}
+
+        <section className="dashboard-status-section">
+
+          <div>
+
+            <p className="admin-eyebrow">
+              PROJECT JOURNEY
+            </p>
+
+            <h3>
+              Where your inquiries stand.
+            </h3>
+
+          </div>
+
+
+          <div className="dashboard-status-bar">
+
+            <div className="dashboard-status-item">
+
+              <span>
+                NEW
+              </span>
+
+              <strong>
+                {newClients}
+              </strong>
+
+            </div>
+
+
+            <div className="dashboard-status-item">
+
+              <span>
+                CONTACTED
+              </span>
+
+              <strong>
+                {contactedClients}
+              </strong>
+
+            </div>
+
+
+            <div className="dashboard-status-item">
+
+              <span>
+                SITE VISIT
+              </span>
+
+              <strong>
+                {siteVisitClients}
+              </strong>
+
+            </div>
+
+
+            <div className="dashboard-status-item">
+
+              <span>
+                COMPLETED
+              </span>
+
+              <strong>
+                {completedClients}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </section>
+
 
         {/* FOOTER */}
+
         <footer className="admin-footer">
-          <span>TARA LIVING</span>
-          <span>Admin Dashboard</span>
+
+          <span>
+            TARA LIVING
+          </span>
+
+          <span>
+            Studio Dashboard
+          </span>
+
         </footer>
+
       </section>
+
     </main>
   );
 }
