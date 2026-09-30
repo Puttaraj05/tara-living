@@ -10263,3 +10263,339 @@ h1 em {
     grid-column: 2;
   }
 }
+
+/* =========================================================
+   TARA LIVING ADMIN
+   FIXED SIDEBAR — CONTENT SCROLLS INDEPENDENTLY
+========================================================= */
+
+.admin-page {
+  min-height: 100vh;
+  display: block;
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      rgba(163, 177, 138, 0.14),
+      transparent 28%
+    ),
+    var(--tl-cream-light);
+}
+
+
+/* =========================================================
+   FIXED SIDEBAR
+========================================================= */
+
+.admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 248px;
+  height: 100vh;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 32px 18px 22px;
+
+  box-sizing: border-box;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      var(--tl-sage-ink) 0%,
+      #46513f 100%
+    );
+
+  color: var(--tl-white);
+
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    8px 0 30px rgba(63, 73, 56, 0.08);
+
+  z-index: 1000;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+.admin-main {
+  width: calc(100% - 248px);
+  min-height: 100vh;
+
+  margin-left: 248px;
+
+  padding: 38px 48px 28px;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SIDEBAR FOOTER STAYS AT BOTTOM
+========================================================= */
+
+.admin-sidebar-footer {
+  margin-top: auto;
+}
+
+
+/* =========================================================
+   SIDEBAR SCROLLBAR
+========================================================= */
+
+.admin-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+
+/* =========================================================
+   MOBILE ADMIN — HORIZONTAL SIDEBAR
+========================================================= */
+
+@media (max-width: 900px) {
+
+  /* PAGE */
+  .admin-page {
+    display: block;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+
+  /* =======================================================
+     TOP NAVIGATION BAR
+  ======================================================= */
+
+  .admin-page .admin-sidebar {
+    position: relative;
+
+    top: auto;
+    left: auto;
+
+    width: 100%;
+    min-width: 0;
+
+    height: auto;
+    min-height: 0;
+
+    padding: 16px 18px 0;
+
+    display: block;
+
+    overflow: visible;
+
+    box-sizing: border-box;
+
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    box-shadow: 0 4px 20px rgba(63, 73, 56, 0.08);
+
+    z-index: 1000;
+  }
+
+
+  /* =======================================================
+     BRAND
+  ======================================================= */
+
+  .admin-page .admin-brand {
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 0 0 14px;
+    margin: 0;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+
+  .admin-page .admin-brand-mark {
+    width: 90px;
+    height: 42px;
+
+    flex-shrink: 0;
+  }
+
+
+  .admin-page .admin-brand > div:last-child {
+    margin-left: 0;
+  }
+
+
+  .admin-page .admin-brand h1 {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
+
+
+  .admin-page .admin-brand > div:last-child span {
+    margin-top: 4px;
+    font-size: 7px;
+  }
+
+
+  /* =======================================================
+     HORIZONTAL NAV
+  ======================================================= */
+
+  .admin-page .admin-nav {
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    gap: 4px;
+
+    margin: 12px 0 0;
+    padding: 0 0 12px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    scrollbar-width: none;
+  }
+
+
+  .admin-page .admin-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+
+  /* EACH NAV ITEM */
+  .admin-page .admin-nav .admin-nav-item {
+    width: auto;
+    min-width: max-content;
+
+    height: 38px;
+    min-height: 38px;
+
+    flex: 0 0 auto;
+
+    padding: 0 12px;
+
+    gap: 7px;
+
+    border-radius: 4px;
+  }
+
+
+  .admin-page .admin-nav .admin-nav-icon {
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+
+    font-size: 11px !important;
+  }
+
+
+  .admin-page .admin-nav .admin-nav-item > span:last-child {
+    font-size: 10px !important;
+    letter-spacing: 0.02em;
+  }
+
+
+  /* =======================================================
+     FOOTER
+  ======================================================= */
+
+  .admin-page .admin-sidebar-footer {
+    display: none;
+  }
+
+
+  /* =======================================================
+     MAIN CONTENT
+  ======================================================= */
+
+  .admin-page .admin-main {
+    width: 100%;
+
+    min-height: auto;
+
+    margin-left: 0;
+
+    padding: 28px 18px 30px;
+
+    box-sizing: border-box;
+  }
+
+}
+
+.admin-logout-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  margin-bottom: 18px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  background: transparent;
+  color: #777a72;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+  text-align: left;
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.admin-logout-button:hover {
+  background: #f5eeea;
+  border-color: #eadbd4;
+  color: #9a5b50;
+}
+
+.admin-logout-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 8px;
+
+  background: #f1eee6;
+
+  font-size: 16px;
+}
+
+.admin-sidebar-copyright {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

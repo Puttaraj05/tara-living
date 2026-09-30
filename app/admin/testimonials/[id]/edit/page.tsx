@@ -15,6 +15,10 @@ type Testimonial = {
   created_at: string;
 };
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:8000";
+
 export default function EditTestimonialPage() {
   const params = useParams();
   const router = useRouter();
@@ -35,13 +39,28 @@ export default function EditTestimonialPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
+  /*
+   * ---------------------------------------
+   * Load testimonial
+   * ---------------------------------------
+   */
   useEffect(() => {
     const fetchTestimonial = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/testimonials/${params.id}`
+          `${API_URL}/api/testimonials/${params.id}`,
+          {
+            credentials: "include",
+          }
         );
+
+        if (response.status === 401) {
+          throw new Error(
+            "Authentication expired. Please log out and log in again."
+          );
+        }
 
         if (!response.ok) {
           throw new Error(
@@ -57,7 +76,8 @@ export default function EditTestimonialPage() {
         setFormData({
           client_name: data.client_name,
           location: data.location,
-          property_type: data.property_type,
+          property_type:
+            data.property_type,
           rating: data.rating,
           review: data.review,
         });
@@ -66,14 +86,27 @@ export default function EditTestimonialPage() {
           "Failed to load testimonial:",
           error
         );
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load testimonial."
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTestimonial();
+    if (params.id) {
+      fetchTestimonial();
+    }
   }, [params.id]);
 
+  /*
+   * ---------------------------------------
+   * Image URL helper
+   * ---------------------------------------
+   */
   const getImageUrl = (
     image: string | null
   ) => {
@@ -86,12 +119,17 @@ export default function EditTestimonialPage() {
     }
 
     if (image.startsWith("/uploads")) {
-      return `http://127.0.0.1:8000${image}`;
+      return `${API_URL}${image}`;
     }
 
     return image;
   };
 
+  /*
+   * ---------------------------------------
+   * Submit update
+   * ---------------------------------------
+   */
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
@@ -103,10 +141,15 @@ export default function EditTestimonialPage() {
 
     try {
       setSaving(true);
+      setError("");
 
       let imagePath = testimonial.image;
 
-      // Upload new image only if selected
+      /*
+       * ---------------------------------------
+       * Upload replacement image
+       * ---------------------------------------
+       */
       if (newImage) {
         const imageFormData =
           new FormData();
@@ -118,14 +161,29 @@ export default function EditTestimonialPage() {
 
         const imageResponse =
           await fetch(
-            "http://127.0.0.1:8000/api/testimonials/upload-image",
+            `${API_URL}/api/testimonials/upload-image`,
             {
               method: "POST",
+              credentials: "include",
               body: imageFormData,
             }
           );
 
+        if (imageResponse.status === 401) {
+          throw new Error(
+            "Authentication expired. Please log out and log in again."
+          );
+        }
+
         if (!imageResponse.ok) {
+          const errorText =
+            await imageResponse.text();
+
+          console.error(
+            "Image upload error:",
+            errorText
+          );
+
           throw new Error(
             "Failed to upload image"
           );
@@ -137,10 +195,16 @@ export default function EditTestimonialPage() {
         imagePath = imageResult.image;
       }
 
+      /*
+       * ---------------------------------------
+       * Update testimonial
+       * ---------------------------------------
+       */
       const response = await fetch(
-        `http://127.0.0.1:8000/api/testimonials/${testimonial.id}`,
+        `${API_URL}/api/testimonials/${testimonial.id}`,
         {
           method: "PUT",
+          credentials: "include",
           headers: {
             "Content-Type":
               "application/json",
@@ -166,7 +230,21 @@ export default function EditTestimonialPage() {
         }
       );
 
+      if (response.status === 401) {
+        throw new Error(
+          "Authentication expired. Please log out and log in again."
+        );
+      }
+
       if (!response.ok) {
+        const errorText =
+          await response.text();
+
+        console.error(
+          "Update testimonial error:",
+          errorText
+        );
+
         throw new Error(
           "Failed to update testimonial"
         );
@@ -185,14 +263,23 @@ export default function EditTestimonialPage() {
         error
       );
 
-      alert(
-        "Unable to update testimonial. Please try again."
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to update testimonial. Please try again.";
+
+      setError(message);
+      alert(message);
     } finally {
       setSaving(false);
     }
   };
 
+  /*
+   * ---------------------------------------
+   * Loading state
+   * ---------------------------------------
+   */
   if (loading) {
     return (
       <div className="admin-page">
@@ -203,12 +290,18 @@ export default function EditTestimonialPage() {
     );
   }
 
-  if (!testimonial) {
+  /*
+   * ---------------------------------------
+   * Error / not found
+   * ---------------------------------------
+   */
+  if (error || !testimonial) {
     return (
       <div className="admin-page">
         <main className="admin-main">
           <h2>
-            Testimonial not found
+            {error ||
+              "Testimonial not found"}
           </h2>
 
           <Link
@@ -298,6 +391,7 @@ export default function EditTestimonialPage() {
             onSubmit={handleSubmit}
           >
             <div className="admin-form-grid">
+
               {/* CLIENT NAME */}
               <div className="admin-form-field">
                 <label>
@@ -436,8 +530,7 @@ export default function EditTestimonialPage() {
               <div
                 className="admin-form-field"
                 style={{
-                  gridColumn:
-                    "1 / -1",
+                  gridColumn: "1 / -1",
                 }}
               >
                 <label>
@@ -465,8 +558,7 @@ export default function EditTestimonialPage() {
                 <div
                   className="admin-form-field"
                   style={{
-                    gridColumn:
-                      "1 / -1",
+                    gridColumn: "1 / -1",
                   }}
                 >
                   <label>
@@ -488,8 +580,7 @@ export default function EditTestimonialPage() {
               <div
                 className="admin-form-field"
                 style={{
-                  gridColumn:
-                    "1 / -1",
+                  gridColumn: "1 / -1",
                 }}
               >
                 <label>

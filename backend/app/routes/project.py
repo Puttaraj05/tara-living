@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.project import Project
 from app.schemas.project import ProjectCreate
+from app.core.auth import require_admin
 
 
 router = APIRouter(
@@ -29,6 +30,7 @@ def get_db():
 @router.post("/upload-image")
 async def upload_project_image(
     file: UploadFile = File(...),
+    admin=Depends(require_admin),
 ):
     allowed_types = {
         "image/jpeg",
@@ -67,6 +69,7 @@ async def upload_project_image(
 @router.post("/upload-video")
 async def upload_project_video(
     file: UploadFile = File(...),
+    admin=Depends(require_admin),
 ):
     allowed_types = {
         "video/mp4",
@@ -106,6 +109,7 @@ async def upload_project_video(
 @router.post("/upload-gallery-image")
 async def upload_project_gallery_image(
     file: UploadFile = File(...),
+    admin=Depends(require_admin),
 ):
     allowed_types = {
         "image/jpeg",
@@ -153,6 +157,7 @@ async def upload_project_gallery_image(
 def create_project(
     project: ProjectCreate,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     new_project = Project(
         title=project.title,
@@ -220,6 +225,7 @@ def update_project(
     project_id: int,
     project: ProjectCreate,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     existing_project = (
         db.query(Project)
@@ -264,6 +270,7 @@ def update_project(
 def delete_project(
     project_id: int,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     project = (
         db.query(Project)

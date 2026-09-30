@@ -12,6 +12,7 @@ from app.routes.contact import router as contact_router
 from app.routes.project import router as project_router
 from app.routes.service import router as service_router
 from app.routes.testimonial import router as testimonial_router
+from app.routes.auth import router as auth_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -43,6 +44,8 @@ app.include_router(contact_router)
 app.include_router(project_router)
 app.include_router(service_router)
 app.include_router(testimonial_router)
+app.include_router(auth_router)
+
 @app.get("/")
 def root():
     return {

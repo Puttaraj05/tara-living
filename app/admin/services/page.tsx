@@ -28,7 +28,8 @@ export default function ServicesAdminPage() {
         setError("");
 
         const response = await fetch(
-          `${API_URL}/api/services/`
+          `${API_URL}/api/services/`,
+          
         );
 
         if (!response.ok) {
@@ -100,6 +101,7 @@ export default function ServicesAdminPage() {
         `${API_URL}/api/services/${service.id}`,
         {
           method: "DELETE",
+          credentials: "include",
         }
       );
 

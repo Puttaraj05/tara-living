@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -19,18 +20,51 @@ type Client = {
 };
 
 export default function AdminDashboard() {
+    const router = useRouter();
+
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+    async function handleLogout() {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      router.push("/admin/login");
+      router.refresh();
+    }
+  }
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
+        setError("");
+
         const response = await fetch(
-          `${API_URL}/api/contact/`
+          `${API_URL}/api/contact/`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to load clients");
+          const errorText = await response.text();
+
+          console.error(
+            "Dashboard clients API failed:",
+            response.status,
+            errorText
+          );
+
+          throw new Error(
+            `Failed to load clients: ${response.status}`
+          );
         }
 
         const data = await response.json();
@@ -40,6 +74,12 @@ export default function AdminDashboard() {
         console.error(
           "Dashboard client loading failed:",
           error
+        );
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load clients."
         );
       } finally {
         setLoading(false);
@@ -86,7 +126,10 @@ export default function AdminDashboard() {
         <div className="admin-brand">
 
           <div className="admin-brand-mark">
-            <img src="/images/logo.png" alt="Tara Living" />
+            <img
+              src="/images/logo.png"
+              alt="Tara Living"
+            />
           </div>
 
           <div>
@@ -95,7 +138,6 @@ export default function AdminDashboard() {
           </div>
 
         </div>
-
 
         <nav className="admin-nav">
 
@@ -110,7 +152,6 @@ export default function AdminDashboard() {
             <span>Dashboard</span>
           </Link>
 
-
           <Link
             href="/admin/clients"
             className="admin-nav-item"
@@ -121,7 +162,6 @@ export default function AdminDashboard() {
 
             <span>Clients</span>
           </Link>
-
 
           <Link
             href="/admin/projects"
@@ -134,7 +174,6 @@ export default function AdminDashboard() {
             <span>Projects</span>
           </Link>
 
-
           <Link
             href="/admin/services"
             className="admin-nav-item"
@@ -145,7 +184,6 @@ export default function AdminDashboard() {
 
             <span>Services</span>
           </Link>
-
 
           <Link
             href="/admin/testimonials"
@@ -160,18 +198,33 @@ export default function AdminDashboard() {
 
         </nav>
 
-
         <div className="admin-sidebar-footer">
 
-          <span>
-            © {new Date().getFullYear()} Tara Living
-          </span>
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="admin-logout-button"
+  >
+    <span className="admin-logout-icon">
+      ↪
+    </span>
 
-          <span>
-            Interior Design Studio
-          </span>
+    <span>
+      Logout
+    </span>
+  </button>
 
-        </div>
+  <div className="admin-sidebar-copyright">
+    <span>
+      © {new Date().getFullYear()} Tara Living
+    </span>
+
+    <span>
+      Interior Design Studio
+    </span>
+  </div>
+
+</div>
 
       </aside>
 
@@ -179,7 +232,6 @@ export default function AdminDashboard() {
       {/* MAIN */}
 
       <section className="admin-main">
-
 
         {/* TOPBAR */}
 
@@ -235,7 +287,6 @@ export default function AdminDashboard() {
 
           </div>
 
-
           <div className="dashboard-hero-circle">
 
             <span>
@@ -255,10 +306,22 @@ export default function AdminDashboard() {
         </section>
 
 
+        {/* ERROR */}
+
+        {!loading && error && (
+          <section className="dashboard-card">
+            <div className="dashboard-empty">
+              Unable to load client inquiries.
+              <br />
+              <small>{error}</small>
+            </div>
+          </section>
+        )}
+
+
         {/* STAT CARDS */}
 
         <section className="dashboard-stats">
-
 
           <Link
             href="/admin/clients"
@@ -355,14 +418,12 @@ export default function AdminDashboard() {
 
           </Link>
 
-
         </section>
 
 
         {/* MAIN CONTENT */}
 
         <section className="dashboard-main-grid">
-
 
           {/* RECENT CLIENTS */}
 
@@ -398,6 +459,12 @@ export default function AdminDashboard() {
                 Loading clients...
               </div>
 
+            ) : error ? (
+
+              <div className="dashboard-empty">
+                Unable to load clients.
+              </div>
+
             ) : clients.length === 0 ? (
 
               <div className="dashboard-empty">
@@ -424,13 +491,11 @@ export default function AdminDashboard() {
                         )}
                       </span>
 
-
                       <div className="dashboard-client-avatar">
                         {client.name
                           .charAt(0)
                           .toUpperCase()}
                       </div>
-
 
                       <div className="dashboard-client-details">
 
@@ -445,11 +510,9 @@ export default function AdminDashboard() {
 
                       </div>
 
-
                       <span className="dashboard-client-city">
                         {client.city || "—"}
                       </span>
-
 
                       <span
                         className={`dashboard-status ${
@@ -463,7 +526,6 @@ export default function AdminDashboard() {
                       >
                         {client.status}
                       </span>
-
 
                       <small>
                         {formatDate(
@@ -494,9 +556,7 @@ export default function AdminDashboard() {
               Manage your studio
             </h3>
 
-
             <div className="dashboard-actions-list">
-
 
               <Link
                 href="/admin/projects/add"
@@ -601,7 +661,6 @@ export default function AdminDashboard() {
 
               </Link>
 
-
             </div>
 
           </div>
@@ -624,7 +683,6 @@ export default function AdminDashboard() {
             </h3>
 
           </div>
-
 
           <div className="dashboard-status-bar">
 

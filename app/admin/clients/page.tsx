@@ -45,26 +45,42 @@ export default function ClientsAdminPage() {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        setLoading(true);
         setError("");
 
         const response = await fetch(
-          `${API_URL}/api/contact/`
+          `${API_URL}/api/contact/`,
+          {
+            credentials: "include",
+          }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch clients");
+          const errorText = await response.text();
+
+          console.error(
+            "Clients API failed:",
+            response.status,
+            errorText
+          );
+
+          throw new Error(
+            `Failed to load clients: ${response.status}`
+          );
         }
 
         const data = await response.json();
+
         setClients(data);
       } catch (error) {
-        console.error("Failed to load clients:", error);
+        console.error(
+          "Dashboard client loading failed:",
+          error
+        );
 
         setError(
           error instanceof Error
             ? error.message
-            : "Unable to load clients"
+            : "Unable to load client inquiries."
         );
       } finally {
         setLoading(false);
@@ -97,11 +113,14 @@ export default function ClientsAdminPage() {
         )}`,
         {
           method: "PATCH",
+          credentials: "include",
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update client status");
+        throw new Error(
+          "Failed to update client status"
+        );
       }
 
       const data = await response.json();
@@ -127,18 +146,62 @@ export default function ClientsAdminPage() {
           : currentClient
       );
     } catch (error) {
-      console.error("Status update failed:", error);
+      console.error(
+        "Status update failed:",
+        error
+      );
+
       alert(
         "Unable to update client status. Please try again."
       );
     }
   };
 
-  const exportClientsToExcel = () => {
-    window.open(
-      `${API_URL}/api/contact/export`,
-      "_blank"
-    );
+  const exportClientsToExcel = async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/contact/export`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Export failed: ${response.status}`
+        );
+      }
+
+      const blob = await response.blob();
+
+      const url =
+        window.URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+      link.download =
+        "tara-living-clients.xlsx";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(
+        "Client export failed:",
+        error
+      );
+
+      alert(
+        "Unable to export clients. Please try again."
+      );
+    }
   };
 
   const formatDate = (date: string) => {
@@ -152,34 +215,43 @@ export default function ClientsAdminPage() {
     );
   };
 
-  const getStatusClass = (status: ClientStatus) => {
+  const getStatusClass = (
+    status: ClientStatus
+  ) => {
     switch (status) {
       case "New":
         return "tl-client-status-new";
+
       case "Contacted":
         return "tl-client-status-contacted";
+
       case "Site Visit":
         return "tl-client-status-site";
+
       case "Completed":
         return "tl-client-status-completed";
+
       default:
         return "";
     }
   };
 
   return (
-    <main className="admin-page tl-clients-page">
+    <main className="admin-page">
 
       {/* =====================================================
           SIDEBAR
       ====================================================== */}
 
-      <aside className="tl-clients-sidebar">
+      <aside className="admin-sidebar">
 
-        <div className="tl-sidebar-brand">
+        <div className="admin-brand">
 
-          <div className="tl-brand-mark">
-             <img src="/images/logo.png" alt="Tara Living" />
+          <div className="admin-brand-mark">
+            <img
+              src="/images/logo.png"
+              alt="Tara Living"
+            />
           </div>
 
           <div>
@@ -189,57 +261,75 @@ export default function ClientsAdminPage() {
 
         </div>
 
-        <nav className="tl-sidebar-nav">
+        <nav className="admin-nav">
 
           <Link
             href="/admin"
-            className="tl-sidebar-link"
+            className="admin-nav-item"
           >
-            <span>⌂</span>
-            Dashboard
+            <span className="admin-nav-icon">
+              ⌂
+            </span>
+
+            <span>Dashboard</span>
           </Link>
 
           <Link
             href="/admin/clients"
-            className="tl-sidebar-link active"
+            className="admin-nav-item active"
           >
-            <span>◉</span>
-            Clients
+            <span className="admin-nav-icon">
+              ◉
+            </span>
+
+            <span>Clients</span>
           </Link>
 
           <Link
             href="/admin/projects"
-            className="tl-sidebar-link"
+            className="admin-nav-item"
           >
-            <span>▣</span>
-            Projects
+            <span className="admin-nav-icon">
+              ▣
+            </span>
+
+            <span>Projects</span>
           </Link>
 
           <Link
             href="/admin/services"
-            className="tl-sidebar-link"
+            className="admin-nav-item"
           >
-            <span>✦</span>
-            Services
+            <span className="admin-nav-icon">
+              ✦
+            </span>
+
+            <span>Services</span>
           </Link>
 
           <Link
             href="/admin/testimonials"
-            className="tl-sidebar-link"
+            className="admin-nav-item"
           >
-            <span>♡</span>
-            Testimonials
+            <span className="admin-nav-icon">
+              ♡
+            </span>
+
+            <span>Testimonials</span>
           </Link>
 
         </nav>
 
-        <div className="tl-sidebar-bottom">
+        <div className="admin-sidebar-footer">
+
           <span>
             © {new Date().getFullYear()} Tara Living
           </span>
+
           <span>
             Interior Design Studio
           </span>
+
         </div>
 
       </aside>
@@ -249,13 +339,14 @@ export default function ClientsAdminPage() {
           CONTENT
       ====================================================== */}
 
-      <section className="admin-main tl-clients-content">
+      <section className="admin-main">
 
         {/* HEADER */}
 
         <header className="tl-clients-header">
 
           <div>
+
             <p className="tl-small-label">
               TARA LIVING / CLIENT MANAGEMENT
             </p>
@@ -263,13 +354,17 @@ export default function ClientsAdminPage() {
             <h2>
               Clients
             </h2>
+
           </div>
 
           <div className="tl-header-number">
+
             <span>ACTIVE DATABASE</span>
+
             <strong>
               {clients.length}
             </strong>
+
           </div>
 
         </header>
@@ -343,7 +438,9 @@ export default function ClientsAdminPage() {
             onClick={() => setFilter("New")}
           >
             <span>NEW</span>
-            <strong>{getStatusCount("New")}</strong>
+            <strong>
+              {getStatusCount("New")}
+            </strong>
             <small>Needs attention</small>
           </button>
 
@@ -354,13 +451,17 @@ export default function ClientsAdminPage() {
                 ? "selected"
                 : ""
             }`}
-            onClick={() => setFilter("Contacted")}
+            onClick={() =>
+              setFilter("Contacted")
+            }
           >
             <span>CONTACTED</span>
             <strong>
               {getStatusCount("Contacted")}
             </strong>
-            <small>Conversation started</small>
+            <small>
+              Conversation started
+            </small>
           </button>
 
           <button
@@ -370,7 +471,9 @@ export default function ClientsAdminPage() {
                 ? "selected"
                 : ""
             }`}
-            onClick={() => setFilter("Site Visit")}
+            onClick={() =>
+              setFilter("Site Visit")
+            }
           >
             <span>SITE VISIT</span>
             <strong>
@@ -386,13 +489,17 @@ export default function ClientsAdminPage() {
                 ? "selected"
                 : ""
             }`}
-            onClick={() => setFilter("Completed")}
+            onClick={() =>
+              setFilter("Completed")
+            }
           >
             <span>COMPLETED</span>
             <strong>
               {getStatusCount("Completed")}
             </strong>
-            <small>Finished inquiries</small>
+            <small>
+              Finished inquiries
+            </small>
           </button>
 
         </section>
@@ -405,6 +512,7 @@ export default function ClientsAdminPage() {
           <div className="tl-list-header">
 
             <div>
+
               <p className="tl-small-label">
                 {filter === "All"
                   ? "ALL CLIENTS"
@@ -417,6 +525,7 @@ export default function ClientsAdminPage() {
                   ? "Client"
                   : "Clients"}
               </h3>
+
             </div>
 
             <div className="tl-list-line" />
@@ -428,8 +537,13 @@ export default function ClientsAdminPage() {
 
           {loading && (
             <div className="tl-client-empty">
+
               <div className="tl-loading-circle" />
-              <p>Loading client inquiries...</p>
+
+              <p>
+                Loading client inquiries...
+              </p>
+
             </div>
           )}
 
@@ -438,9 +552,19 @@ export default function ClientsAdminPage() {
 
           {!loading && error && (
             <div className="tl-client-empty">
-              <div className="tl-empty-icon">!</div>
-              <h4>Unable to load clients</h4>
-              <p>{error}</p>
+
+              <div className="tl-empty-icon">
+                !
+              </div>
+
+              <h4>
+                Unable to load clients
+              </h4>
+
+              <p>
+                {error}
+              </p>
+
             </div>
           )}
 
@@ -451,6 +575,7 @@ export default function ClientsAdminPage() {
             !error &&
             filteredClients.length === 0 && (
               <div className="tl-client-empty">
+
                 <div className="tl-empty-icon">
                   ◌
                 </div>
@@ -463,6 +588,7 @@ export default function ClientsAdminPage() {
                   There are no clients in this
                   category yet.
                 </p>
+
               </div>
             )}
 
@@ -498,12 +624,15 @@ export default function ClientsAdminPage() {
                       <div className="tl-client-profile">
 
                         <div className="tl-client-avatar">
+
                           {client.name
                             .charAt(0)
                             .toUpperCase()}
+
                         </div>
 
                         <div>
+
                           <h4>
                             {client.name}
                           </h4>
@@ -511,6 +640,7 @@ export default function ClientsAdminPage() {
                           <p>
                             {client.email}
                           </p>
+
                         </div>
 
                       </div>
@@ -522,6 +652,7 @@ export default function ClientsAdminPage() {
 
                         <div>
                           <span>CONTACT</span>
+
                           <strong>
                             {client.phone || "—"}
                           </strong>
@@ -529,6 +660,7 @@ export default function ClientsAdminPage() {
 
                         <div>
                           <span>LOCATION</span>
+
                           <strong>
                             {client.city || "—"}
                           </strong>
@@ -536,6 +668,7 @@ export default function ClientsAdminPage() {
 
                         <div>
                           <span>PROJECT</span>
+
                           <strong>
                             {client.project_type ||
                               "—"}
@@ -544,6 +677,7 @@ export default function ClientsAdminPage() {
 
                         <div>
                           <span>BUDGET</span>
+
                           <strong>
                             {client.budget || "—"}
                           </strong>
@@ -576,12 +710,14 @@ export default function ClientsAdminPage() {
 
                             {statusOptions.map(
                               (status) => (
+
                                 <option
                                   key={status}
                                   value={status}
                                 >
                                   {status}
                                 </option>
+
                               )
                             )}
 
@@ -676,7 +812,9 @@ export default function ClientsAdminPage() {
 
               <div className="tl-modal-status-row">
 
-                <span>PROJECT STATUS</span>
+                <span>
+                  PROJECT STATUS
+                </span>
 
                 <select
                   value={
@@ -693,12 +831,14 @@ export default function ClientsAdminPage() {
 
                   {statusOptions.map(
                     (status) => (
+
                       <option
                         key={status}
                         value={status}
                       >
                         {status}
                       </option>
+
                     )
                   )}
 
@@ -711,20 +851,25 @@ export default function ClientsAdminPage() {
 
                 <div>
                   <span>PHONE</span>
+
                   <strong>
-                    {selectedClient.phone || "—"}
+                    {selectedClient.phone ||
+                      "—"}
                   </strong>
                 </div>
 
                 <div>
                   <span>LOCATION</span>
+
                   <strong>
-                    {selectedClient.city || "—"}
+                    {selectedClient.city ||
+                      "—"}
                   </strong>
                 </div>
 
                 <div>
                   <span>PROPERTY TYPE</span>
+
                   <strong>
                     {selectedClient.property_type ||
                       "—"}
@@ -733,6 +878,7 @@ export default function ClientsAdminPage() {
 
                 <div>
                   <span>PROJECT TYPE</span>
+
                   <strong>
                     {selectedClient.project_type ||
                       "—"}
@@ -741,13 +887,16 @@ export default function ClientsAdminPage() {
 
                 <div>
                   <span>BUDGET</span>
+
                   <strong>
-                    {selectedClient.budget || "—"}
+                    {selectedClient.budget ||
+                      "—"}
                   </strong>
                 </div>
 
                 <div>
                   <span>RECEIVED</span>
+
                   <strong>
                     {formatDate(
                       selectedClient.created_at
@@ -760,7 +909,9 @@ export default function ClientsAdminPage() {
 
               <div className="tl-modal-message">
 
-                <span>CLIENT MESSAGE</span>
+                <span>
+                  CLIENT MESSAGE
+                </span>
 
                 <p>
                   {selectedClient.message ||
@@ -795,8 +946,15 @@ export default function ClientsAdminPage() {
 
 
         <footer className="tl-client-footer">
-          <span>TARA LIVING</span>
-          <span>Client Management</span>
+
+          <span>
+            TARA LIVING
+          </span>
+
+          <span>
+            Client Management
+          </span>
+
         </footer>
 
       </section>

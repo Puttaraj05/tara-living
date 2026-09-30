@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:8000";
+
 export default function AddTestimonialPage() {
   const router = useRouter();
 
@@ -18,7 +22,8 @@ export default function AddTestimonialPage() {
   const [image, setImage] =
     useState<File | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
@@ -33,20 +38,43 @@ export default function AddTestimonialPage() {
     try {
       setLoading(true);
 
-      // Upload image
+      /*
+       * ---------------------------------------
+       * 1. Upload testimonial image
+       * ---------------------------------------
+       */
+
       const imageFormData = new FormData();
 
-      imageFormData.append("file", image);
+      imageFormData.append(
+        "file",
+        image
+      );
 
       const imageResponse = await fetch(
-        "http://127.0.0.1:8000/api/testimonials/upload-image",
+        `${API_URL}/api/testimonials/upload-image`,
         {
           method: "POST",
+          credentials: "include",
           body: imageFormData,
         }
       );
 
+      if (imageResponse.status === 401) {
+        throw new Error(
+          "Authentication expired. Please log out and log in again."
+        );
+      }
+
       if (!imageResponse.ok) {
+        const errorText =
+          await imageResponse.text();
+
+        console.error(
+          "Image upload error:",
+          errorText
+        );
+
         throw new Error(
           "Failed to upload image"
         );
@@ -55,13 +83,20 @@ export default function AddTestimonialPage() {
       const imageResult =
         await imageResponse.json();
 
-      // Create testimonial
+      /*
+       * ---------------------------------------
+       * 2. Create testimonial
+       * ---------------------------------------
+       */
+
       const response = await fetch(
-        "http://127.0.0.1:8000/api/testimonials/",
+        `${API_URL}/api/testimonials/`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             client_name:
@@ -85,7 +120,21 @@ export default function AddTestimonialPage() {
         }
       );
 
+      if (response.status === 401) {
+        throw new Error(
+          "Authentication expired. Please log out and log in again."
+        );
+      }
+
       if (!response.ok) {
+        const errorText =
+          await response.text();
+
+        console.error(
+          "Create testimonial error:",
+          errorText
+        );
+
         throw new Error(
           "Failed to create testimonial"
         );
@@ -105,7 +154,9 @@ export default function AddTestimonialPage() {
       );
 
       alert(
-        "Unable to add testimonial. Please try again."
+        error instanceof Error
+          ? error.message
+          : "Unable to add testimonial. Please try again."
       );
     } finally {
       setLoading(false);
@@ -184,6 +235,7 @@ export default function AddTestimonialPage() {
             onSubmit={handleSubmit}
           >
             <div className="admin-form-grid">
+
               {/* CLIENT NAME */}
               <div className="admin-form-field">
                 <label>
@@ -324,8 +376,7 @@ export default function AddTestimonialPage() {
               <div
                 className="admin-form-field"
                 style={{
-                  gridColumn:
-                    "1 / -1",
+                  gridColumn: "1 / -1",
                 }}
               >
                 <label>
@@ -353,8 +404,7 @@ export default function AddTestimonialPage() {
               <div
                 className="admin-form-field"
                 style={{
-                  gridColumn:
-                    "1 / -1",
+                  gridColumn: "1 / -1",
                 }}
               >
                 <label>

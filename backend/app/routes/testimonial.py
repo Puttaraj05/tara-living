@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.testimonial import Testimonial
 from app.schemas.testimonial import TestimonialCreate
+from app.core.auth import require_admin
 
 
 router = APIRouter(
@@ -27,6 +28,7 @@ def get_db():
 @router.post("/upload-image")
 async def upload_testimonial_image(
     file: UploadFile = File(...),
+    admin=Depends(require_admin),
 ):
     allowed_types = {
         "image/jpeg",
@@ -71,6 +73,7 @@ async def upload_testimonial_image(
 def create_testimonial(
     testimonial: TestimonialCreate,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     new_testimonial = Testimonial(
         client_name=testimonial.client_name,
@@ -130,6 +133,7 @@ def update_testimonial(
     testimonial_id: int,
     testimonial: TestimonialCreate,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     existing_testimonial = (
         db.query(Testimonial)
@@ -181,6 +185,8 @@ def update_testimonial(
 def delete_testimonial(
     testimonial_id: int,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+
 ):
     testimonial = (
         db.query(Testimonial)

@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useState } from "react";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function AddProjectPage() {
   const [formData, setFormData] = useState({
     title: "",
@@ -43,70 +46,122 @@ export default function AddProjectPage() {
   };
 
   const handleSubmit = async (
-  event: FormEvent<HTMLFormElement>
-) => {
-  event.preventDefault();
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
 
-  if (!imageFile) {
-    alert("Please select a project image.");
-    return;
-  }
-
-  try {
-    // 1. Upload project image
-    const imageData = new FormData();
-
-    imageData.append("file", imageFile);
-
-    const imageResponse = await fetch(
-      "http://127.0.0.1:8000/api/projects/upload-image",
-      {
-        method: "POST",
-        body: imageData,
-      }
-    );
-
-    if (!imageResponse.ok) {
-      throw new Error("Image upload failed");
+    if (!imageFile) {
+      alert("Please select a project image.");
+      return;
     }
 
-    const imageResult = await imageResponse.json();
+    try {
+      // =========================================================
+      // 1. Upload project image
+      // =========================================================
 
-    // 2. Create project in MySQL
-    const projectResponse = await fetch(
-      "http://127.0.0.1:8000/api/projects/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          image: imageResult.image,
-        }),
+      const imageData = new FormData();
+
+      imageData.append("file", imageFile);
+
+      const imageResponse = await fetch(
+        `${API_URL}/api/projects/upload-image`,
+        {
+          method: "POST",
+
+          // IMPORTANT:
+          // Send the HTTP-only tara_admin_token cookie.
+          credentials: "include",
+
+          body: imageData,
+        }
+      );
+
+      if (imageResponse.status === 401) {
+        alert(
+          "Your admin session has expired. Please log in again."
+        );
+
+        window.location.href = "/admin/login";
+        return;
       }
-    );
 
-    if (!projectResponse.ok) {
-      throw new Error("Project creation failed");
+      if (!imageResponse.ok) {
+        const errorData = await imageResponse.json().catch(() => null);
+
+        throw new Error(
+          errorData?.detail ||
+            errorData?.message ||
+            "Image upload failed"
+        );
+      }
+
+      const imageResult = await imageResponse.json();
+
+      // =========================================================
+      // 2. Create project in MySQL
+      // =========================================================
+
+      const projectResponse = await fetch(
+        `${API_URL}/api/projects/`,
+        {
+          method: "POST",
+
+          // IMPORTANT:
+          // Send the HTTP-only tara_admin_token cookie.
+          credentials: "include",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            ...formData,
+            image: imageResult.image,
+          }),
+        }
+      );
+
+      if (projectResponse.status === 401) {
+        alert(
+          "Your admin session has expired. Please log in again."
+        );
+
+        window.location.href = "/admin/login";
+        return;
+      }
+
+      if (!projectResponse.ok) {
+        const errorData = await projectResponse.json().catch(() => null);
+
+        throw new Error(
+          errorData?.detail ||
+            errorData?.message ||
+            "Project creation failed"
+        );
+      }
+
+      const projectResult = await projectResponse.json();
+
+      console.log("Project created:", projectResult);
+
+      alert("Project created successfully!");
+
+      // =========================================================
+      // 3. Return to Projects page
+      // =========================================================
+
+      window.location.href = "/admin/projects";
+    } catch (error) {
+      console.error("Project creation failed:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to create the project. Please try again."
+      );
     }
-
-    const projectResult = await projectResponse.json();
-
-    console.log("Project created:", projectResult);
-
-    alert("Project created successfully!");
-
-    // 3. Return to Projects page
-    window.location.href = "/admin/projects";
-  } catch (error) {
-    console.error("Project creation failed:", error);
-
-    alert(
-      "Unable to create the project. Please try again."
-    );
-  }
-};
+  };
 
   return (
     <main className="admin-page">
@@ -121,12 +176,18 @@ export default function AddProjectPage() {
         </div>
 
         <nav className="admin-nav">
-          <Link href="/admin" className="admin-nav-item">
+          <Link
+            href="/admin"
+            className="admin-nav-item"
+          >
             <span className="admin-nav-icon">⌂</span>
             <span>Dashboard</span>
           </Link>
 
-          <Link href="/admin/clients" className="admin-nav-item">
+          <Link
+            href="/admin/clients"
+            className="admin-nav-item"
+          >
             <span className="admin-nav-icon">◉</span>
             <span>Clients</span>
           </Link>
@@ -139,32 +200,49 @@ export default function AddProjectPage() {
             <span>Projects</span>
           </Link>
 
-          <button className="admin-nav-item" type="button">
+          <button
+            className="admin-nav-item"
+            type="button"
+          >
             <span className="admin-nav-icon">✦</span>
             <span>Services</span>
           </button>
 
-          <button className="admin-nav-item" type="button">
+          <button
+            className="admin-nav-item"
+            type="button"
+          >
             <span className="admin-nav-icon">♡</span>
             <span>Testimonials</span>
           </button>
 
-          <button className="admin-nav-item" type="button">
+          <button
+            className="admin-nav-item"
+            type="button"
+          >
             <span className="admin-nav-icon">↓</span>
             <span>Export</span>
           </button>
         </nav>
 
         <div className="admin-sidebar-footer">
-          <span>© {new Date().getFullYear()} Tara Living</span>
-          <span>Interior Design Studio</span>
+          <span>
+            © {new Date().getFullYear()} Tara Living
+          </span>
+
+          <span>
+            Interior Design Studio
+          </span>
         </div>
       </aside>
 
       <section className="admin-main">
         <header className="admin-topbar">
           <div>
-            <p className="admin-eyebrow">PROJECT MANAGEMENT</p>
+            <p className="admin-eyebrow">
+              PROJECT MANAGEMENT
+            </p>
+
             <h2>Add Project</h2>
           </div>
 
@@ -178,7 +256,9 @@ export default function AddProjectPage() {
 
         <section className="admin-welcome">
           <div>
-            <p className="admin-eyebrow">NEW PROJECT</p>
+            <p className="admin-eyebrow">
+              NEW PROJECT
+            </p>
 
             <h3>
               Add a new
@@ -188,8 +268,9 @@ export default function AddProjectPage() {
           </div>
 
           <p className="admin-welcome-text">
-            Add the project details, imagery and client review
-            that will appear across the Tara Living portfolio.
+            Add the project details, imagery and client
+            review that will appear across the Tara Living
+            portfolio.
           </p>
         </section>
 
@@ -203,8 +284,13 @@ export default function AddProjectPage() {
                 <div className="admin-form-card">
                   <div className="admin-form-card-header">
                     <div>
-                      <p className="admin-eyebrow">01</p>
-                      <h3>Project Details</h3>
+                      <p className="admin-eyebrow">
+                        01
+                      </p>
+
+                      <h3>
+                        Project Details
+                      </h3>
                     </div>
                   </div>
 
@@ -256,15 +342,19 @@ export default function AddProjectPage() {
                         <option value="">
                           Select category
                         </option>
+
                         <option value="Residential">
                           Residential
                         </option>
+
                         <option value="Commercial">
                           Commercial
                         </option>
+
                         <option value="Renovation">
                           Renovation
                         </option>
+
                         <option value="Design & Styling">
                           Design & Styling
                         </option>
@@ -325,8 +415,13 @@ export default function AddProjectPage() {
                 <div className="admin-form-card">
                   <div className="admin-form-card-header">
                     <div>
-                      <p className="admin-eyebrow">02</p>
-                      <h3>Project Image</h3>
+                      <p className="admin-eyebrow">
+                        02
+                      </p>
+
+                      <h3>
+                        Project Image
+                      </h3>
                     </div>
                   </div>
 
@@ -342,7 +437,11 @@ export default function AddProjectPage() {
                     ) : (
                       <div className="admin-image-upload-empty">
                         <span>＋</span>
-                        <strong>Upload Project Image</strong>
+
+                        <strong>
+                          Upload Project Image
+                        </strong>
+
                         <small>
                           JPG, PNG or WEBP
                         </small>
@@ -366,7 +465,9 @@ export default function AddProjectPage() {
                 </div>
 
                 <div className="admin-form-card admin-form-note">
-                  <p className="admin-eyebrow">TIP</p>
+                  <p className="admin-eyebrow">
+                    TIP
+                  </p>
 
                   <p>
                     Use a high-quality project image that
@@ -398,8 +499,13 @@ export default function AddProjectPage() {
         </section>
 
         <footer className="admin-footer">
-          <span>TARA LIVING</span>
-          <span>Project Management</span>
+          <span>
+            TARA LIVING
+          </span>
+
+          <span>
+            Project Management
+          </span>
         </footer>
       </section>
     </main>
