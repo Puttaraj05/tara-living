@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.contact import Contact
 from app.schemas.contact import ContactCreate
+from app.core.auth import require_admin
+
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
@@ -57,7 +59,8 @@ def create_contact(
 # =========================================================
 
 @router.get("/")
-def get_contacts(db: Session = Depends(get_db)):
+def get_contacts(db: Session = Depends(get_db),admin=Depends(require_admin),):
+    
     contacts = (
         db.query(Contact)
         .order_by(Contact.created_at.desc())
@@ -76,6 +79,8 @@ def update_contact_status(
     contact_id: int,
     status: str,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+    
 ):
     contact = (
         db.query(Contact)
@@ -107,6 +112,7 @@ def update_contact_status(
 @router.get("/export")
 def export_contacts_to_excel(
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     contacts = (
         db.query(Contact)

@@ -109,6 +109,7 @@ export default function TestimonialsAdminPage() {
         `${API_URL}/api/testimonials/${testimonial.id}`,
         {
           method: "DELETE",
+          credentials: "include",
         }
       );
 

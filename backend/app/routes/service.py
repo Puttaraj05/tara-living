@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.service import Service
 from app.schemas.service import ServiceCreate
+from app.core.auth import require_admin
 
 
 router = APIRouter(
@@ -27,6 +28,7 @@ def get_db():
 @router.post("/upload-image")
 async def upload_service_image(
     file: UploadFile = File(...),
+    admin=Depends(require_admin),
 ):
     allowed_types = {
         "image/jpeg",
@@ -67,6 +69,7 @@ async def upload_service_image(
 def create_service(
     service: ServiceCreate,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     new_service = Service(
         title=service.title,
@@ -126,6 +129,7 @@ def update_service(
     service_id: int,
     service: ServiceCreate,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     existing_service = (
         db.query(Service)
@@ -157,6 +161,7 @@ def update_service(
 def delete_service(
     service_id: int,
     db: Session = Depends(get_db),
+    admin=Depends(require_admin),
 ):
     service = (
         db.query(Service)
