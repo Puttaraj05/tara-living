@@ -445,10 +445,14 @@ const goToPreviousFounder = () => {
                 <Image
                   src="/images/logo.png"
                   alt="Tara Living Logo"
-                  width={150}
-                  height={50}
+                  width={462}
+                  height={410}
                   priority
                   className="logo"
+                  style={{
+                    width: "50px",
+                    height: "auto",
+                  }}
                 />
 
                 <span>
@@ -1368,8 +1372,18 @@ const goToPreviousFounder = () => {
         <div className="footer-main">
           <div className="footer-brand">
             <a href="#home" className="brand footer-logo">
-              <span className="brand-mark">✦</span>
-
+              <span className="brand-mark">
+  <Image
+    src="/images/logo.png"
+    alt="Tara Living"
+    width={462}
+    height={410}
+    style={{
+    width: "50px",
+    height: "auto",
+  }}
+  />
+</span>
               <span>
                 <strong>TARA</strong>
                 <small>LIVING</small>
@@ -1382,7 +1396,7 @@ const goToPreviousFounder = () => {
             </p>
 
             <div className="socials">
-              <a href="#" aria-label="Instagram">
+              <a href="" aria-label="Instagram">
                 IG
               </a>
 

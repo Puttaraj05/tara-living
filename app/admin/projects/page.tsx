@@ -77,49 +77,45 @@ export default function ProjectsAdminPage() {
     return `${API_URL}${image}`;
   };
 
-  const deleteProject = async (
-    project: Project
-  ) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${project.title}"?`
+  const deleteProject = async (id: number) => {
+  if (!confirm("Are you sure you want to delete this project?")) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_URL}/api/projects/${id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
     );
 
-    if (!confirmed) {
-      return;
-    }
+    const responseText = await response.text();
 
-    try {
-      const response = await fetch(
-        `${API_URL}/api/projects/${project.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+    console.log("DELETE STATUS:", response.status);
+    console.log("DELETE RESPONSE:", responseText);
 
-      if (!response.ok) {
-        throw new Error(
-          "Failed to delete project"
-        );
-      }
-
-      setProjects((currentProjects) =>
-        currentProjects.filter(
-          (item) => item.id !== project.id
-        )
-      );
-
-      alert("Project deleted successfully.");
-    } catch (error) {
-      console.error(
-        "Project deletion failed:",
-        error
-      );
-
-      alert(
-        "Unable to delete project. Please try again."
+    if (!response.ok) {
+      throw new Error(
+        `Failed to delete project (${response.status}): ${responseText}`
       );
     }
-  };
+
+    setProjects((prev) =>
+      prev.filter((project) => project.id !== id)
+    );
+
+  } catch (error) {
+    console.error("DELETE PROJECT ERROR:", error);
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Failed to delete project"
+    );
+  }
+};
 
   return (
     <main className="admin-page">
@@ -404,14 +400,10 @@ export default function ProjectsAdminPage() {
                         </Link>
 
                         <button
-                          type="button"
-                          className="admin-project-delete"
-                          onClick={() =>
-                            deleteProject(
-                              project
-                            )
-                          }
-                        >
+  type="button"
+  className="admin-project-delete"
+  onClick={() => deleteProject(project.id)}
+>
                           Delete
                         </button>
                       </div>
