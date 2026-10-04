@@ -1,243 +1,137 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-type ProjectGalleryProps = {
-  images: string[];
-};
+type ProjectGalleryProps = { images: string[] };
 
-export default function ProjectGallery({
-  images,
-}: ProjectGalleryProps) {
+export default function ProjectGallery({ images }: ProjectGalleryProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const frameRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const section = sectionRef.current;
-    const frame = frameRef.current;
     const track = trackRef.current;
+    const bar = barRef.current;
+    if (!section || !track || !bar) return;
 
-    if (!section || !frame || !track) {
-      return;
-    }
+    let target = 0;
+    let current = 0;
+    let maxX = 0;
+    let lastIdx = 0;
+    let raf = 0;
 
-    let animationFrame = 0;
-
-    const updateGallery = () => {
+    const measure = () => {
+      maxX = Math.max(0, track.scrollWidth - window.innerWidth);
+      section.style.height = `${maxX + window.innerHeight}px`;
       const rect = section.getBoundingClientRect();
-
-      const viewportHeight = window.innerHeight;
-
-      /*
-       * How far the user can scroll while
-       * the gallery remains active.
-       */
-      const scrollDistance =
-        section.offsetHeight - viewportHeight;
-
-      if (scrollDistance <= 0) {
-        return;
-      }
-
-      const passed = -rect.top;
-
-      let progress =
-        passed / scrollDistance;
-
-      progress = Math.max(
-        0,
-        Math.min(1, progress)
-      );
-
-      /*
-       * Horizontal distance required to show
-       * the complete gallery.
-       */
-      const maxTranslate =
-        track.scrollWidth -
-        window.innerWidth;
-
-      const translateX =
-        progress * maxTranslate;
-
-      /*
-       * Move gallery horizontally.
-       */
-      track.style.transform =
-        `translate3d(${-translateX}px, 0, 0)`;
-
-      /*
-       * Keep the gallery visually fixed while
-       * scrolling through this section.
-       */
-      const sectionStarted =
-        rect.top <= 0;
-
-      const sectionFinished =
-        rect.bottom <= viewportHeight;
-
-      const isActive =
-        sectionStarted && !sectionFinished;
-
-      if (isActive) {
-        frame.classList.add(
-          "project-gallery-frame-active"
-        );
-      } else {
-        frame.classList.remove(
-          "project-gallery-frame-active"
-        );
-      }
-
-      animationFrame = 0;
+      target = maxX > 0 ? Math.max(0, Math.min(1, -rect.top / maxX)) : 0;
     };
 
-    const handleScroll = () => {
-      if (animationFrame) {
-        return;
+    const tick = () => {
+      current += (target - current) * 0.09;
+      if (Math.abs(target - current) < 0.0003) current = target;
+
+      track.style.transform = `translate3d(${-current * maxX}px,0,0)`;
+      bar.style.transform = `scaleX(${current})`;
+
+      const vw = window.innerWidth;
+      let best = 0;
+      let bestDist = Infinity;
+
+      track.querySelectorAll<HTMLElement>(".pg-item").forEach((item, i) => {
+        const r = item.getBoundingClientRect();
+        const dist = (r.left + r.width / 2 - vw / 2) / vw;
+        const d = Math.min(Math.abs(dist), 0.8);
+
+        /* focus effect: centre photo is full size, neighbours recede */
+        item.style.transform = `scale(${1 - d * 0.14})`;
+        item.style.opacity = `${1 - d * 0.55}`;
+
+        /* parallax inside the frame */
+        const img = item.querySelector<HTMLImageElement>("img");
+        if (img) img.style.transform = `translate3d(${dist * -80}px,0,0) scale(1.2)`;
+
+        if (Math.abs(dist) < bestDist) {
+          bestDist = Math.abs(dist);
+          best = i;
+        }
+      });
+
+      if (best !== lastIdx) {
+        lastIdx = best;
+        setIndex(best);
       }
 
-      animationFrame =
-        requestAnimationFrame(
-          updateGallery
-        );
+      raf = current !== target ? requestAnimationFrame(tick) : 0;
     };
 
-    const handleResize = () => {
-      handleScroll();
+    const kick = () => {
+      measure();
+      if (!raf) raf = requestAnimationFrame(tick);
     };
 
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      { passive: true }
-    );
+    const ro = new ResizeObserver(kick);
+    ro.observe(track);
 
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
-
-    /*
-     * Wait for images/layout to calculate
-     * their real width.
-     */
-    window.addEventListener(
-      "load",
-      handleResize
-    );
-
-    handleScroll();
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", kick);
+    window.addEventListener("load", kick);
+    kick();
 
     return () => {
-      window.removeEventListener(
-        "scroll",
-        handleScroll
-      );
-
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
-
-      window.removeEventListener(
-        "load",
-        handleResize
-      );
-
-      if (animationFrame) {
-        cancelAnimationFrame(
-          animationFrame
-        );
-      }
+      ro.disconnect();
+      window.removeEventListener("scroll", kick);
+      window.removeEventListener("resize", kick);
+      window.removeEventListener("load", kick);
+      if (raf) cancelAnimationFrame(raf);
     };
   }, [images]);
 
-  if (!images.length) {
-    return null;
-  }
+  if (!images.length) return null;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <section
-      ref={sectionRef}
-      className="project-gallery-section"
-    >
-      <div
-        ref={frameRef}
-        className="project-gallery-frame"
-      >
-
-        {/* HEADING */}
-        <div className="project-gallery-heading">
-
-          <p className="eyebrow">
-            VISUAL MOMENTS
-          </p>
-
-          <h2>
-            A closer look
-            <br />
-            <em>at the space.</em>
-          </h2>
+    <section ref={sectionRef} className="pg-section">
+      <div className="pg-frame">
+        <div className="pg-heading">
+          <div>
+            <p className="pg-eyebrow">VISUAL MOMENTS</p>
+            <h2>
+              A closer look
+              <br />
+              <em>at the space.</em>
+            </h2>
+          </div>
+          <div className="pg-count">
+            <b>{pad(index + 1)}</b>
+            <span>/ {pad(images.length)}</span>
+          </div>
         </div>
 
-        {/* HORIZONTAL TRACK */}
-        <div
-          ref={trackRef}
-          className="project-gallery-track"
-        >
-
-          {images.map(
-            (image, index) => (
-              <div
-                className="project-gallery-item"
-                key={`${image}-${index}`}
-              >
-
-                <div className="project-gallery-image">
-
-                  <img
-                    src={image}
-                    alt={`Project interior ${
-                      index + 1
-                    }`}
-                    loading={
-                      index === 0
-                        ? "eager"
-                        : "lazy"
-                    }
-                  />
-
-                </div>
-
-                <div className="project-gallery-number">
-                  {String(
-                    index + 1
-                  ).padStart(2, "0")}
-                </div>
-
+        <div ref={trackRef} className="pg-track">
+          {images.map((image, i) => (
+            <div className="pg-item" key={`${image}-${i}`}>
+              <div className="pg-image">
+                <img
+                  src={image}
+                  alt={`Project interior ${i + 1}`}
+                  loading={i < 2 ? "eager" : "lazy"}
+                  decoding="async"
+                />
               </div>
-            )
-          )}
-
+            </div>
+          ))}
         </div>
 
-        {/* BOTTOM PROGRESS */}
-        <div className="project-gallery-progress">
-
-          <span>
-            SCROLL TO EXPLORE
-          </span>
-
-          <span>
-            {String(
-              images.length
-            ).padStart(2, "0")}
-          </span>
-
+        <div className="pg-footer">
+          <span>SCROLL TO EXPLORE</span>
+          <div className="pg-progress">
+            <div ref={barRef} className="pg-bar" />
+          </div>
         </div>
-
       </div>
     </section>
   );

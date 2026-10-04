@@ -1,753 +1,458 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import ScrollVideo from "@/app/components/ScrollVideo";
+"use client";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://127.0.0.1:8000";
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+
+import ScrollVideo from "../../components/ScrollVideo";
+import ProjectGallery from "../../components/ProjectGallery";
+import Reveal from "../../components/Reveal";
+import { Lines, Words } from "../../components/TextReveal";
+import ParallaxImg from "../../components/ParallaxImg";
+import ScrollProgress from "../../components/ScrollProgress";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 type Project = {
   id: number;
-
   title: string;
   location: string;
   category: string;
   image: string;
-
-  gallery_images: string | null;
-
+  cover_image?: string;
   description: string;
-  work_done: string;
-
-  tour_video: string | null;
-
-  story_title: string | null;
-  story_text: string | null;
-
-  materials: string | null;
-  lighting: string | null;
-  space_story: string | null;
-
-  client_video: string | null;
   client_review: string | null;
   client_name: string | null;
-
-  created_at: string;
+  client_video: string | null;
+  tour_video: string | null;
+  story_title: string | null;
+  story_text: string | null;
+  space_story: string | null;
+  materials: string | null;
+  lighting: string | null;
+  work_done: string | null;
+  gallery_images: string | string[] | null;
 };
 
-function getMediaUrl(
-  path: string | null | undefined
-) {
+function getMediaUrl(path: string | null | undefined) {
   if (!path) return "";
-
-  if (
-    path.startsWith("http://") ||
-    path.startsWith("https://")
-  ) {
-    return path;
-  }
-
+  if (path.startsWith("http")) return path;
   return `${API_URL}${path}`;
 }
 
-async function getProject(
-  id: string
-): Promise<Project | null> {
-  try {
-    const response = await fetch(
-      `${API_URL}/api/projects/${id}`,
-      {
-        cache: "no-store",
-      }
-    );
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-
-    if (
-      !data ||
-      data.message === "Project not found"
-    ) {
-      return null;
-    }
-
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function parseGallery(
-  gallery: string | null
-): string[] {
+function parseGallery(gallery: string | string[] | null): string[] {
   if (!gallery) return [];
-
+  if (Array.isArray(gallery)) return gallery;
   try {
     const parsed = JSON.parse(gallery);
-
-    return Array.isArray(parsed)
-      ? parsed
-      : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-export default async function ProjectPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+/* "The Hillside Residence" -> ["The Hillside", <em>Residence</em>] */
+function splitTitle(title: string) {
+  const w = title.trim().split(/\s+/);
+  if (w.length < 2) return [title];
+  const mid = Math.ceil(w.length / 2);
+  return [w.slice(0, mid).join(" "), <em key="e">{w.slice(mid).join(" ")}</em>];
+}
 
-  const project = await getProject(id);
+export default function ProjectDetailPage() {
+  const params = useParams();
+  const id = params?.id;
 
-  if (!project) {
-    notFound();
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const loadProject = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+
+        const response = await fetch(`${API_URL}/api/projects/`, {
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("Failed to fetch projects");
+
+        const projects: Project[] = await response.json();
+        const found = projects.find((p) => String(p.id) === String(id));
+
+        if (!found) {
+          setError(true);
+          return;
+        }
+        setProject(found);
+      } catch (err) {
+        console.error("Project loading error:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProject();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <main className="pp-page pp-state">
+        <p>Loading project...</p>
+      </main>
+    );
   }
 
-  const imageUrl = getMediaUrl(
-    project.image
-  );
+  if (error || !project) {
+    return (
+      <main className="pp-page pp-state">
+        <p className="pp-eyebrow">PROJECT</p>
+        <h1>Project not found.</h1>
+        <Link href="/projects" className="pp-btn">
+          ← Back to projects
+        </Link>
+      </main>
+    );
+  }
 
-  const videoUrl = getMediaUrl(
-    project.tour_video
-  );
+  const gallery = parseGallery(project.gallery_images);
+  const heroImage = getMediaUrl(project.image);
+  const tourVideo = getMediaUrl(project.tour_video);
+  const clientVideo = getMediaUrl(project.client_video);
+  const projectNo = String(project.id).padStart(2, "0");
 
-  const galleryImages = parseGallery(
-    project.gallery_images
-  ).map(getMediaUrl);
+  /* bento: images cycle through the gallery, fall back to hero */
+  const pool = [gallery[1], gallery[2], gallery[3], gallery[0]].filter(
+    Boolean
+  ) as string[];
+  const pic = (i: number) =>
+    getMediaUrl(pool.length ? pool[i % pool.length] : project.image);
 
-  const year = new Date(
-    project.created_at
-  ).getFullYear();
+  const cards = [
+    { no: "01", label: "Materials", text: project.materials },
+    { no: "02", label: "Lighting", text: project.lighting },
+    { no: "03", label: "Space", text: project.space_story },
+    { no: "04", label: project.category, text: project.location },
+  ];
 
-  /*
-   * Use gallery images as editorial images.
-   * If the database has fewer images, we simply
-   * render the sections that are available.
-   */
-
-  const image1 =
-    galleryImages[0] || imageUrl;
-
-  const image2 =
-    galleryImages[1] || imageUrl;
-
-  const image3 =
-    galleryImages[2] || imageUrl;
-
-  const image4 =
-    galleryImages[3] || imageUrl;
+  const tiles = [
+    { type: "img", i: 0, pos: "pp-a" },
+    { type: "card", i: 0, pos: "pp-b" },
+    { type: "card", i: 1, pos: "pp-c" },
+    { type: "img", i: 1, pos: "pp-d" },
+    { type: "img", i: 2, pos: "pp-e" },
+    { type: "card", i: 2, pos: "pp-f" },
+    { type: "card", i: 3, pos: "pp-g" },
+    { type: "img", i: 3, pos: "pp-h" },
+  ];
 
   return (
-    <main className="editorial-project">
+    <main className="pp-page">
+      <ScrollProgress />
 
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
-
-      <header className="editorial-header">
-
-        <Link
-          href="/"
-          className="editorial-logo"
-        >
-          TARA LIVING
-        </Link>
-
-        <nav>
-          <Link href="/projects">
-            Projects
-          </Link>
-
-          <Link href="/#about">
-            About
-          </Link>
-
-          <Link href="/#contact">
-            Contact
-          </Link>
-        </nav>
-
-      </header>
-
-
-      {/* =====================================================
-          HERO
-      ===================================================== */}
-
-      <section className="editorial-hero">
-
-        <div className="editorial-hero-image">
-
-          {imageUrl && (
-            <img
-              src={imageUrl}
-              alt={project.title}
-            />
-          )}
-
-          <div className="editorial-hero-shade" />
-
+      {/* ================= HERO ================= */}
+      <section className="pp-hero">
+        <div className="pp-hero-bg">
+          <ParallaxImg strength={28} src={heroImage} alt={project.title} />
         </div>
+        <div className="pp-hero-shade" />
 
+        <Link href="/" className="pp-hero-logo">
+  <Image
+    src="/images/logo.png"
+    alt="Tara Living Logo"
+    width={462}
+    height={410}
+    priority
+    className="pp-hero-logo-img"
+  />
+</Link>
 
-        <div className="editorial-hero-content">
-
-          <div className="editorial-hero-kicker">
-
-            <span>
-              {project.category}
-            </span>
-
-            <span>
-              {project.location}
-            </span>
-
-            <span>
-              {year}
-            </span>
-
+        <div className="pp-hero-content">
+          <div className="pp-meta">
+            <span>{project.category}</span>
+            <span>{project.location}</span>
           </div>
 
+          <Lines as="h1" lines={splitTitle(project.title)} delay={250} />
 
-          <h1>
-            {project.title}
-          </h1>
-
-
-          <div className="editorial-hero-bottom">
-
-            <span>
-              TARA LIVING
+          <div className="pp-hero-bottom">
+            <span>SELECTED PROJECT — {projectNo}</span>
+            <span className="pp-scroll-cue">
+              SCROLL <i />
             </span>
-
-            <span>
-              SCROLL TO EXPLORE
-            </span>
-
           </div>
-
         </div>
-
       </section>
 
-
-      {/* =====================================================
-          PROJECT INTRO
-      ===================================================== */}
-
-      <section className="editorial-intro">
-
-        <div className="editorial-number">
-          01
-        </div>
-
-
-        <div className="editorial-intro-content">
-
-          <div className="editorial-intro-heading">
-
-            <p className="editorial-eyebrow">
-              THE PROJECT
-            </p>
-
-            <h2>
-              Designed around
-              <br />
-              <em>
-                the way life unfolds.
-              </em>
-            </h2>
-
-          </div>
-
-
-          <div className="editorial-intro-text">
-
-            <p>
-              {project.description}
-            </p>
-
-            {project.work_done && (
-              <div className="editorial-work">
-
-                <span>
-                  SCOPE OF WORK
-                </span>
-
-                <p>
-                  {project.work_done}
-                </p>
-
-              </div>
-            )}
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* =====================================================
-          LARGE IMAGE
-      ===================================================== */}
-
-      {image1 && (
-        <section className="editorial-image-full">
-
-          <img
-            src={image1}
-            alt=""
+      {/* ================= INTRO ================= */}
+      <section className="pp-intro">
+        <div>
+          <Reveal>
+            <p className="pp-eyebrow">01 — THE PROJECT</p>
+          </Reveal>
+          <Lines
+            lines={["A space designed", <em key="e">around living.</em>]}
           />
-
-          <div className="editorial-image-caption">
-            {project.title}
-          </div>
-
-        </section>
-      )}
-
-
-      {/* =====================================================
-          HOME TOUR
-      ===================================================== */}
-
-      {videoUrl && (
-        <section className="editorial-tour">
-
-          <div className="editorial-section-top">
-
-            <div>
-              <span>
-                02
-              </span>
-
-              <p>
-                HOME TOUR
-              </p>
-            </div>
-
-            <span>
-              SCROLL
-            </span>
-
-          </div>
-
-
-          <div className="editorial-tour-title">
-
-            <h2>
-              Experience
-              <br />
-              <em>the space.</em>
-            </h2>
-
-          </div>
-
-
-          <div className="editorial-video">
-
-            <ScrollVideo
-              src={videoUrl}
-            />
-
-          </div>
-
-        </section>
-      )}
-
-
-      {/* =====================================================
-          VISUAL STORY
-      ===================================================== */}
-
-      {galleryImages.length > 0 && (
-        <section className="editorial-gallery">
-
-          <div className="editorial-section-top">
-
-            <div>
-              <span>
-                03
-              </span>
-
-              <p>
-                VISUAL STORY
-              </p>
-            </div>
-
-          </div>
-
-
-          <div className="editorial-gallery-intro">
-
-            <h2>
-              A collection of
-              <br />
-              <em>
-                quiet moments.
-              </em>
-            </h2>
-
-            <p>
-              Every detail was considered to create
-              a space that feels natural, personal and
-              effortlessly lived in.
-            </p>
-
-          </div>
-
-
-          <div className="editorial-gallery-grid">
-
-            {image1 && (
-              <div className="gallery-image gallery-image-large">
-
-                <img
-                  src={image1}
-                  alt=""
-                />
-
-              </div>
-            )}
-
-
-            {image2 && (
-              <div className="gallery-image gallery-image-small">
-
-                <img
-                  src={image2}
-                  alt=""
-                />
-
-              </div>
-            )}
-
-
-            {image3 && (
-              <div className="gallery-image gallery-image-wide">
-
-                <img
-                  src={image3}
-                  alt=""
-                />
-
-              </div>
-            )}
-
-
-            {image4 && (
-              <div className="gallery-image gallery-image-tall">
-
-                <img
-                  src={image4}
-                  alt=""
-                />
-
-              </div>
-            )}
-
-          </div>
-
-        </section>
-      )}
-
-
-      {/* =====================================================
-          STORY
-      ===================================================== */}
-
-      {(project.story_title ||
-        project.story_text) && (
-
-        <section className="editorial-story">
-
-          <div className="editorial-section-top">
-
-            <div>
-              <span>
-                04
-              </span>
-
-              <p>
-                THE HOME, IN DETAILS
-              </p>
-            </div>
-
-          </div>
-
-
-          <div className="editorial-story-layout">
-
-            <div className="editorial-story-image">
-
-              {image3 && (
-                <img
-                  src={image3}
-                  alt=""
-                />
-              )}
-
-            </div>
-
-
-            <div className="editorial-story-copy">
-
-              <p className="editorial-eyebrow">
-                DESIGN APPROACH
-              </p>
-
-              {project.story_title && (
-                <h2>
-                  {project.story_title}
-                </h2>
-              )}
-
-              {project.story_text && (
-                <p className="editorial-story-text">
-                  {project.story_text}
-                </p>
-              )}
-
-            </div>
-
-          </div>
-
-
-          {/* DETAILS */}
-
-          {(project.materials ||
-            project.lighting ||
-            project.space_story) && (
-
-            <div className="editorial-details">
-
-              {project.materials && (
-                <div>
-
-                  <span>
-                    01
-                  </span>
-
-                  <h3>
-                    Materials
-                  </h3>
-
-                  <p>
-                    {project.materials}
-                  </p>
-
-                </div>
-              )}
-
-
-              {project.lighting && (
-                <div>
-
-                  <span>
-                    02
-                  </span>
-
-                  <h3>
-                    Lighting
-                  </h3>
-
-                  <p>
-                    {project.lighting}
-                  </p>
-
-                </div>
-              )}
-
-
-              {project.space_story && (
-                <div>
-
-                  <span>
-                    03
-                  </span>
-
-                  <h3>
-                    Spatial Approach
-                  </h3>
-
-                  <p>
-                    {project.space_story}
-                  </p>
-
-                </div>
-              )}
-
-            </div>
-          )}
-
-        </section>
-      )}
-
-
-      {/* =====================================================
-          CLIENT
-      ===================================================== */}
-
-      {(project.client_review ||
-        project.client_video) && (
-
-        <section className="editorial-client">
-
-          <div className="editorial-section-top">
-
-            <div>
-              <span>
-                05
-              </span>
-
-              <p>
-                CLIENT EXPERIENCE
-              </p>
-            </div>
-
-          </div>
-
-
-          <div className="editorial-client-content">
-
-            <p className="editorial-eyebrow">
-              IN THEIR WORDS
-            </p>
-
-            {project.client_review && (
-              <blockquote>
-                “{project.client_review}”
-              </blockquote>
-            )}
-
-            {project.client_name && (
-              <div className="editorial-client-name">
-                — {project.client_name}
-              </div>
-            )}
-
-          </div>
-
-
-          {project.client_video && (
-            <div className="editorial-client-video">
-
-              <video
-                src={getMediaUrl(
-                  project.client_video
-                )}
-                controls
-                playsInline
-                preload="metadata"
-              />
-
-            </div>
-          )}
-
-        </section>
-      )}
-
-
-      {/* =====================================================
-          FINAL IMAGE
-      ===================================================== */}
-
-      {image4 && (
-        <section className="editorial-final-image">
-
-          <img
-            src={image4}
-            alt=""
-          />
-
-          <div className="editorial-final-overlay">
-
-            <p>
-              TARA LIVING
-            </p>
-
-            <h2>
-              Spaces that
-              <br />
-              <em>
-                feel like home.
-              </em>
-            </h2>
-
-          </div>
-
-        </section>
-      )}
-
-
-      {/* =====================================================
-          CTA
-      ===================================================== */}
-
-      <section className="editorial-cta">
-
-        <p className="editorial-eyebrow">
-          START YOUR PROJECT
-        </p>
-
-        <h2>
-          Let&apos;s create
-          <br />
-          <em>
-            your space.
-          </em>
-        </h2>
-
-        <p className="editorial-cta-text">
-          Have a space in mind?
-          <br />
-          Let&apos;s bring your vision to life.
-        </p>
-
-        <Link
-          href="/#contact"
-          className="editorial-cta-button"
-        >
-          Book a Consultation
-        </Link>
-
-        <Link
-          href="/projects"
-          className="editorial-back"
-        >
-          ← Back to all projects
-        </Link>
-
-      </section>
-
-
-      {/* =====================================================
-          FOOTER
-      ===================================================== */}
-
-      <footer className="editorial-footer">
+        </div>
 
         <div>
-          TARA LIVING
+          <Reveal delay={150}>
+            <p className="pp-lead">{project.description}</p>
+          </Reveal>
+
+          <div className="pp-facts">
+            {[
+              ["Category", project.category],
+              ["Location", project.location],
+              ["Project", `No. ${projectNo}`],
+            ].map(([label, value], n) => (
+              <Reveal key={label} delay={250 + n * 120} variant="scale">
+                <div className="pp-fact">
+                  <b>{value}</b>
+                  <span>{label}</span>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          {project.work_done && (
+            <Reveal delay={200}>
+              <div className="pp-work">
+                <span>WORK DONE</span>
+                <p>{project.work_done}</p>
+              </div>
+            </Reveal>
+          )}
+        </div>
+      </section>
+
+      {/* ================= HOME TOUR (unchanged) ================= */}
+      {tourVideo && <ScrollVideo src={tourVideo} />}
+
+      {/* ================= GALLERY (unchanged) ================= */}
+      {gallery.length > 0 && (
+        <ProjectGallery images={gallery.map((image) => getMediaUrl(image))} />
+      )}
+     
+
+
+      {/* ================= SECTION 1: THE STORY ================= */}
+{(project.story_title || project.story_text) && (
+  <section className="pp-story">
+    <div className="pp-story-img-wrap">
+      <img
+        src={
+          (gallery && gallery[0] && getMediaUrl(gallery[0])) ||
+          heroImage ||
+          project.cover_image ||
+          "/placeholder-interior.jpg"
+        }
+        alt={`${project.title} interior`}
+      />
+    </div>
+
+    <div className="pp-story-content">
+      <span className="pp-bignum">03</span>
+      <p className="pp-eyebrow">THE STORY</p>
+      {project.story_title && (
+        <h2 className="pp-story-title">{project.story_title}</h2>
+      )}
+      <p className="pp-lead">{project.story_text || project.description}</p>
+    </div>
+  </section>
+)}
+
+{/* ================= SECTION 2: DESIGN DETAILS (BENTO) ================= */}
+<section className="pp-details">
+  <div className="pp-dh">
+    <div className="pp-dh-header">
+      <p className="pp-eyebrow">04 — DESIGN DETAILS</p>
+      <h2 className="pp-dh-title">
+        Thoughtful details, <em>quietly considered.</em>
+      </h2>
+    </div>
+    <p className="pp-dh-note">
+      Materials, light and space, designed to work as one.
+    </p>
+  </div>
+
+  <div className="pp-bento">
+    {/* Card 01 */}
+    <div className="pp-tile pp-card">
+      <span className="pp-card-no">01</span>
+      <div className="pp-card-body">
+        <h3>Materials</h3>
+        <p>Subtle wood textures and natural stone elements.</p>
+      </div>
+    </div>
+
+    {/* Portrait Image */}
+    <div className="pp-tile pp-imgtile">
+      <img
+        src={getMediaUrl(gallery?.[1]) || heroImage}
+        alt="Interior detail"
+      />
+    </div>
+
+    {/* Wide Image (Span 2) */}
+    <div className="pp-tile pp-imgtile span-2">
+      <img
+        src={getMediaUrl(gallery?.[2]) || heroImage}
+        alt="Wide interior view"
+      />
+    </div>
+
+    {/* Wide Image (Span 2) */}
+    <div className="pp-tile pp-imgtile span-2">
+      <img
+        src={getMediaUrl(gallery?.[3]) || heroImage}
+        alt="Wide living space"
+      />
+    </div>
+
+    {/* Card 02 */}
+    <div className="pp-tile pp-card">
+      <span className="pp-card-no">02</span>
+      <div className="pp-card-body">
+        <h3>Lighting</h3>
+        <p>Warm ambient illumination carefully placed.</p>
+      </div>
+    </div>
+
+    {/* Portrait Image */}
+    <div className="pp-tile pp-imgtile">
+      <img
+        src={getMediaUrl(gallery?.[4]) || heroImage}
+        alt="Lighting detail"
+      />
+    </div>
+  </div>
+</section>
+
+{/* ================= SECTION 3: SPACE STORY ================= */}
+{project.space_story && (
+  <section className="pp-offset">
+    <div className="pp-offset-img-wrap">
+      <img
+        src={
+          (gallery && gallery[5] && getMediaUrl(gallery[5])) ||
+          (gallery && gallery[1] && getMediaUrl(gallery[1])) ||
+          heroImage
+        }
+        alt="Interior space"
+      />
+    </div>
+
+    <div className="pp-offset-cap">
+      <span>SPACE STORY</span>
+      <p>{project.space_story}</p>
+    </div>
+  </section>
+)}
+
+      {/* ================= CLIENT ================= */}
+      {project.client_review && (
+        <section className="pp-client">
+          <Reveal>
+            <p className="pp-eyebrow">05 — CLIENT EXPERIENCE</p>
+          </Reveal>
+
+          <blockquote>
+            <Words text={`“${project.client_review}”`} />
+          </blockquote>
+
+          {project.client_name && (
+            <Reveal delay={300}>
+              <p className="pp-client-who">
+                {project.client_name} · {project.location}
+              </p>
+            </Reveal>
+          )}
+
+          {clientVideo && (
+            <Reveal variant="clip" className="pp-client-video">
+              <video src={clientVideo} muted playsInline controls preload="metadata" />
+            </Reveal>
+          )}
+        </section>
+      )}
+
+      {/* ================= FOOTER ================= */}
+      <footer className="pp-footer">
+        <div className="pp-marquee" aria-hidden="true">
+          <div className="pp-marquee-track">
+            {[0, 1].map((k) => (
+              <span key={k}>
+                Designed with care ✦ Built to last ✦ Made for living ✦ Designed with
+                care ✦ Built to last ✦ Made for living ✦{" "}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <p>
-          Living spaces.
-          <br />
-          Thoughtfully designed.
-        </p>
+        <div className="pp-footer-in">
+          <div className="pp-footer-top">
+            <Lines
+              as="h2"
+              lines={["Let’s create", <em key="e">your space.</em>]}
+            />
+            <Link href="/#contact" className="pp-btn pp-btn-sand">
+              Book a consultation ↗
+            </Link>
+          </div>
 
-        <div>
-          © {year} Tara Living
+          <div className="pp-footer-cols">
+            <div>
+              <div className="pp-logo"><strong>TARA</strong> <small>LIVING</small> </div>
+              
+              <p>
+                Interior design studio crafting calm, functional homes in warm,
+                natural materials.
+              </p>
+            </div>
+            <div>
+              <h4>Explore</h4>
+              <Link href="/">Home</Link>
+              <Link href="/projects">Projects</Link>
+              <Link href="/#about">About</Link>
+              <Link href="/#contact">Contact</Link>
+            </div>
+            <div>
+              <h4>Contact</h4>
+              <a href="mailto:taraliving09@gmail.com">taraliving09@gmail.com</a>
+              <a href="tel:+91 86391 14375">+91 86391 14375</a>
+              <p>Hyderabad, India</p>
+            </div>
+            <div>
+              <h4>Follow</h4>
+              <a href="https://www.instagram.com/_taraliving?stkn=MWNremgxbWV2ODhwbg%3D%3D&utm_source=qr">Instagram</a>
+              <a href="#">Facebook</a>
+              <a
+    href="https://wa.me/918639114375"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="WhatsApp"
+  >WhatsApp</a>
+            </div>
+          </div>
+
+          <div className="pp-footer-bot">
+            <span>© 2026 YOUR STUDIO. ALL RIGHTS RESERVED.</span>
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            >
+              BACK TO TOP ↑
+            </button>
+          </div>
         </div>
-
       </footer>
-
     </main>
   );
 }

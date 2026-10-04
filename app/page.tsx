@@ -3,6 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect , useState } from "react";
+import {
+  FaInstagram,
+  FaFacebookF,
+  FaWhatsapp,
+} from "react-icons/fa";
+import ProcessSection from "@/app/components/ProcessSection";
 
 const founders = [
   {
@@ -165,6 +171,8 @@ export default function Home() {
 
   const [testimonials, setTestimonials] =
     useState<ApiTestimonial[]>([]);
+  
+    
 
   // PROJECTS
   const [projects, setProjects] =
@@ -172,6 +180,8 @@ export default function Home() {
 
   const [projectsLoading, setProjectsLoading] =
     useState(true);
+
+  const [activeProject, setActiveProject] = useState(0);   
 
   useEffect(() => {
   console.log("PROJECT FETCH STARTED");
@@ -199,6 +209,18 @@ export default function Home() {
 
   fetchProjects();
 }, []);
+
+useEffect(() => {
+  if (!projects.length) return;
+
+  const interval = setInterval(() => {
+    setActiveProject((current) => {
+      return (current + 1) % Math.min(projects.length, 5);
+    });
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [projects.length]);
 
 useEffect(() => {
   const fetchServices = async () => {
@@ -241,6 +263,34 @@ useEffect(() => {
   };
 
     fetchServices();
+}, []);
+
+useEffect(() => {
+  const servicesSection =
+    document.querySelector(".services");
+
+  if (!servicesSection) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        servicesSection.classList.add(
+          "services-section-visible"
+        );
+
+        observer.unobserve(servicesSection);
+      }
+    },
+    {
+      threshold: 0.2,
+    }
+  );
+
+  observer.observe(servicesSection);
+
+  return () => {
+    observer.disconnect();
+  };
 }, []);
 
 useEffect(() => {
@@ -289,6 +339,28 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 }, [testimonials.length]);
+
+useEffect(() => {
+  const section = document.querySelector(".final-cta");
+
+  if (!section) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        section.classList.add("cta-visible");
+        observer.unobserve(section);
+      }
+    },
+    {
+      threshold: 0.5,
+    }
+  );
+
+  observer.observe(section);
+
+  return () => observer.disconnect();
+}, []);
 
 const [activeFounder, setActiveFounder] = useState(0);
 const [slideDirection, setSlideDirection] =
@@ -618,7 +690,7 @@ const goToPreviousFounder = () => {
      {/* PROJECTS */}
 <section id="projects" className="projects section">
 
-  {/* SECTION HEADER */}
+  {/* HEADER */}
   <div className="section-top projects-top reveal">
 
     <div className="projects-heading">
@@ -646,65 +718,71 @@ const goToPreviousFounder = () => {
   </div>
 
 
-  {/* PROJECT GRID */}
-  <div className="project-grid">
+  {/* EXPANDING PROJECT SHOWCASE */}
+  <div className="project-showcase">
 
-  {projects.map((project, index) => {
+    {projects.slice(0, 5).map((project, index) => (
+      <Link
+        href={`/projects/${project.id}`}
+        className={`project-panel ${
+          activeProject === index ? "active" : ""
+        }`}
+        key={project.id}
+        onMouseEnter={() => setActiveProject(index)}
+        onFocus={() => setActiveProject(index)}
+        onClick={() => setActiveProject(index)}
+      >
 
-    const size =
-      index === 0 || index === 3
-        ? "large"
-        : "small";
+        {/* IMAGE */}
+        <Image
+          src={getProjectImage(project.image)}
+          alt={project.title}
+          fill
+          priority={index === 0}
+          sizes="(max-width: 768px) 90vw, 70vw"
+          className="project-panel-image"
+        />
 
-    return (
-      <article
-  className={`project-card ${size} reveal delay-${
-    (index % 4) + 1
-  }`}
-  key={project.id}
->
+        {/* DARK GRADIENT */}
+        <div className="project-panel-overlay" />
 
-        <Link
-          href={`/projects/${project.id}`}
-          className="project-card-link"
-        >
 
-          <div className="project-image">
+        {/* ACTIVE PROJECT INFORMATION */}
+        <div className="project-panel-content">
 
-            <Image
-              src={getProjectImage(project.image)}
-              alt={project.title}
-              fill
-              sizes="(max-width: 800px) 100vw, 50vw"
-            />
+          <div className="project-number">
+            {String(index + 1).padStart(2, "0")}
+          </div>
 
-            <div className="project-hover">
-              <span>View project</span>
-              <strong>↗</strong>
+          <div className="project-copy">
+
+            <p className="project-panel-category">
+              {project.category}
+            </p>
+
+            <h3>
+              {project.title}
+            </h3>
+
+            <div className="project-meta">
+              <span>{project.location}</span>
+              <span>↗</span>
             </div>
 
           </div>
 
-          <div className="project-info">
+        </div>
 
-            <div>
-              <h3>{project.title}</h3>
-              <p>{project.category}</p>
-            </div>
 
-            <span className="project-location">
-              {project.location}
-            </span>
+        {/* COLLAPSED PANEL NUMBER */}
+        <div className="project-collapsed-number">
+          {String(index + 1).padStart(2, "0")}
+        </div>
 
-          </div>
+      </Link>
+    ))}
 
-        </Link>
-
-      </article>
-    );
-  })}
-
-</div>
+  </div>
 
 </section>
 
@@ -845,36 +923,7 @@ const goToPreviousFounder = () => {
 </section>
 
       {/* PROCESS */}
-      <section id="process" className="process section">
-        <div className="section-heading centered reveal">
-          <p className="eyebrow">OUR PROCESS</p>
-
-          <h2>
-            A thoughtful process.
-            <br />
-            <em>Effortless experience.</em>
-          </h2>
-        </div>
-
-        <div className="process-grid">
-          {processSteps.map((item, index) => (
-            <div
-              className={`process-item reveal delay-${
-                (index % 4) + 1
-              }`}
-              key={item.number}
-            >
-              <div className="process-icon">
-                {item.number}
-              </div>
-
-              <h3>{item.title}</h3>
-
-              <p>{item.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+<ProcessSection processSteps={processSteps} />
 
       {/* WHY TARA LIVING */}
 <section className="why-us-bento section">
@@ -1137,234 +1186,617 @@ const goToPreviousFounder = () => {
 
 </section>
 
-      {/* FINAL CTA */}
+      {/* =========================================================
+    FINAL CTA / CONTACT SECTION
+========================================================= */}
+
 <section id="contact" className="final-cta">
-  <div className="cta-image">
+
+  {/* BACKGROUND INTERIOR IMAGE */}
+  <div className="final-cta-bg">
     <Image
       src="/images/footer1.jpg"
       alt="Tara Living interior"
       fill
-      loading="eager"
+      priority
       sizes="100vw"
     />
   </div>
 
-  <div className="cta-overlay" />
+  {/* SOFT OVERLAY */}
+  <div className="final-cta-overlay" />
 
-  <div className="cta-content inquiry-content reveal">
-    <p className="eyebrow">START YOUR JOURNEY</p>
 
-    <h2>
-      Let&apos;s create a space
-      <br />
-      <em>that feels like you.</em>
-    </h2>
+  <div className="final-cta-container">
 
-    <p className="inquiry-intro">
-      Tell us a little about your project and our team will
-      get in touch with you.
-    </p>
+    {/* =====================================================
+        LEFT CONTENT
+    ===================================================== */}
 
-    <form className="inquiry-form" onSubmit={handleSubmit}>
-      <div className="form-row">
-        <div className="form-field">
-          <label htmlFor="name">Name</label>
-          <input
-            id="name"
-            type="text"
-            placeholder="Rahul Sharma"
-            value={formData.name}
-            onChange={(event) =>
-              setFormData({
-                ...formData,
-                name: event.target.value,
-              })
-            }
-            required
-          />
-        </div>
+    <div className="final-cta-info">
 
-        <div className="form-field">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            placeholder="rahul@gmail.com"
-            value={formData.email}
-            onChange={(event) =>
-              setFormData({
-                ...formData,
-                email: event.target.value,
-              })
-            }
-            required
-          />
-        </div>
+      {/* EYEBROW */}
+      <div className="final-cta-eyebrow">
+        <span />
+        <p>GET IN TOUCH</p>
+        <span />
       </div>
 
-      <div className="form-row">
-        <div className="form-field">
-          <label htmlFor="phone">Phone</label>
-          <input
-            id="phone"
-            type="tel"
-            placeholder="9876543210"
-            value={formData.phone}
-            onChange={(event) =>
-              setFormData({
-                ...formData,
-                phone: event.target.value,
-              })
-            }
-            required
-          />
-        </div>
 
-        <div className="form-field">
-          <label htmlFor="city">City</label>
-          <input
-            id="city"
-            type="text"
-            placeholder="Hyderabad"
-            value={formData.city}
-            onChange={(event) =>
-              setFormData({
-                ...formData,
-                city: event.target.value,
-              })
-            }
-            required
-          />
-        </div>
+      {/* HEADING */}
+      <h2>
+        Let&apos;s discuss
+        <br />
+        <em>your project</em>
+      </h2>
+
+
+      {/* DESCRIPTION */}
+      <p className="final-cta-description">
+        Tell us a little about your project and our team
+        will get in touch with you. We&apos;d love to help you
+        bring your dream space to life.
+      </p>
+
+
+      {/* =================================================
+          CONTACT DETAILS
+      ================================================= */}
+
+      <div className="contact-details">
+
+  {/* CALL */}
+  <a
+    href="tel:+918639114375"
+    className="contact-detail"
+    aria-label="Call Tara Living"
+  >
+    <div className="contact-icon">
+      <span>⌕</span>
+    </div>
+
+    <div className="contact-detail-text">
+      <strong>Call Us</strong>
+
+      <span>
+        +91 86391 14375
+      </span>
+    </div>
+  </a>
+
+
+  {/* EMAIL */}
+  <a
+    href="mailto:taraliving09@gmail.com"
+    className="contact-detail"
+    aria-label="Email Tara Living"
+  >
+    <div className="contact-icon">
+      <span>✉</span>
+    </div>
+  
+    <div className="contact-detail-text">
+      <strong>Email Us</strong>
+
+      <span>
+        taraliving09@gmail.com
+      </span>
+    </div>
+  </a>
+
+
+  {/* LOCATION */}
+  <a
+    href="https://www.google.com/maps/search/?api=1&query=Hyderabad%2C%20India"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="contact-detail"
+    aria-label="Open Tara Living location in Google Maps"
+  >
+    <div className="contact-icon">
+      <span>⌖</span>
+    </div>
+
+    <div className="contact-detail-text">
+      <strong>Visit Us</strong>
+
+      <span>
+        Hyderabad, India
+      </span>
+    </div>
+  </a>
+
+</div>
+
+      {/* =================================================
+          HANDWRITTEN MESSAGE
+      ================================================= */}
+
+      <div className="vision-message">
+
+        <span>
+          Your Vision
+        </span>
+
+        <span>
+          Our Priority
+        </span>
+
+        <div />
+
       </div>
 
-      <div className="form-row">
-        <div className="form-field">
-          <label htmlFor="property_type">Property Type</label>
+    </div>
 
-          <select
-            id="property_type"
-            value={formData.property_type}
-            onChange={(event) =>
-              setFormData({
-                ...formData,
-                property_type: event.target.value,
-              })
-            }
-            required
-          >
-            <option value="">Select property type</option>
-            <option value="Apartment">Apartment</option>
-            <option value="Villa">Villa</option>
-            <option value="Independent House">
-              Independent House
-            </option>
-            <option value="Office">Office</option>
-            <option value="Retail / Shop">
-              Retail / Shop
-            </option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
 
-        <div className="form-field">
-          <label htmlFor="project_type">Project Type</label>
 
-          <select
-            id="project_type"
-            value={formData.project_type}
-            onChange={(event) =>
-              setFormData({
-                ...formData,
-                project_type: event.target.value,
-              })
-            }
-            required
-          >
-            <option value="">Select project type</option>
-            <option value="Full Home Interior">
-              Full Home Interior
-            </option>
-            <option value="Living Room Interior">
-              Living Room Interior
-            </option>
-            <option value="Bedroom Interior">
-              Bedroom Interior
-            </option>
-            <option value="Modular Kitchen">
-              Modular Kitchen
-            </option>
-            <option value="Commercial Interior">
-              Commercial Interior
-            </option>
-            <option value="Renovation">
-              Renovation
-            </option>
-            <option value="Custom Furniture">
-              Custom Furniture
-            </option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-      </div>
+    {/* =====================================================
+        RIGHT FORM
+    ===================================================== */}
 
-      <div className="form-field">
-        <label htmlFor="budget">Budget</label>
+    <div className="final-cta-form-card">
 
-        <select
-          id="budget"
-          value={formData.budget}
-          onChange={(event) =>
-            setFormData({
-              ...formData,
-              budget: event.target.value,
-            })
-          }
-          required
-        >
-          <option value="">Select your budget</option>
-          <option value="Below ₹10L">Below ₹10L</option>
-          <option value="₹10L - ₹15L">₹10L - ₹15L</option>
-          <option value="₹15L - ₹25L">₹15L - ₹25L</option>
-          <option value="₹25L - ₹40L">₹25L - ₹40L</option>
-          <option value="₹40L+">₹40L+</option>
-        </select>
-      </div>
-
-      <div className="form-field">
-        <label htmlFor="message">Tell us about your project</label>
-
-        <textarea
-          id="message"
-          rows={5}
-          placeholder="I want to renovate my 3BHK..."
-          value={formData.message}
-          onChange={(event) =>
-            setFormData({
-              ...formData,
-              message: event.target.value,
-            })
-          }
-          required
-        />
-      </div>
-
-      <button
-        type="submit"
-        className="button button-light inquiry-submit"
-        disabled={isSubmitting}
+      <form
+        className="final-inquiry-form"
+        onSubmit={handleSubmit}
       >
-        {isSubmitting ? "Submitting..." : "Submit Inquiry"}
-        <span>↗</span>
-      </button>
 
-      {submitMessage && (
-        <p className="submit-message">
-          {submitMessage}
-        </p>
-      )}
-    </form>
+        {/* =================================================
+            ROW 1
+        ================================================= */}
+
+        <div className="final-form-row">
+
+          {/* NAME */}
+          <div className="final-form-field">
+
+            <label htmlFor="name">
+              FULL NAME <sup>*</sup>
+            </label>
+
+            <div className="final-input">
+
+              <span className="final-input-icon">
+                ♙
+              </span>
+
+              <input
+                id="name"
+                type="text"
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    name: event.target.value,
+                  })
+                }
+                required
+              />
+
+            </div>
+
+          </div>
+
+
+          {/* EMAIL */}
+          <div className="final-form-field">
+
+            <label htmlFor="email">
+              EMAIL <sup>*</sup>
+            </label>
+
+            <div className="final-input">
+
+              <span className="final-input-icon">
+                ✉
+              </span>
+
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    email: event.target.value,
+                  })
+                }
+                required
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        {/* =================================================
+            ROW 2
+        ================================================= */}
+
+        <div className="final-form-row">
+
+          {/* PHONE */}
+          <div className="final-form-field">
+
+            <label htmlFor="phone">
+              PHONE <sup>*</sup>
+            </label>
+
+            <div className="final-input">
+
+              <span className="final-input-icon phone-icon">
+                ⌕
+              </span>
+
+              <input
+                id="phone"
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={formData.phone}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    phone: event.target.value,
+                  })
+                }
+                required
+              />
+
+            </div>
+
+          </div>
+
+
+          {/* CITY */}
+          <div className="final-form-field">
+
+            <label htmlFor="city">
+              CITY <sup>*</sup>
+            </label>
+
+            <div className="final-input">
+
+              <span className="final-input-icon">
+                ⌖
+              </span>
+
+              <input
+                id="city"
+                type="text"
+                placeholder="Your city"
+                value={formData.city}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    city: event.target.value,
+                  })
+                }
+                required
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        {/* =================================================
+            ROW 3
+        ================================================= */}
+
+        <div className="final-form-row">
+
+          {/* PROPERTY */}
+          <div className="final-form-field">
+
+            <label htmlFor="property_type">
+              PROPERTY TYPE <sup>*</sup>
+            </label>
+
+            <div className="final-input final-select">
+
+              <span className="final-input-icon">
+                ⌂
+              </span>
+
+              <select
+                id="property_type"
+                value={formData.property_type}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    property_type: event.target.value,
+                  })
+                }
+                required
+              >
+
+                <option value="">
+                  Select property type
+                </option>
+
+                <option value="Apartment">
+                  Apartment
+                </option>
+
+                <option value="Villa">
+                  Villa
+                </option>
+
+                <option value="Independent House">
+                  Independent House
+                </option>
+
+                <option value="Office">
+                  Office
+                </option>
+
+                <option value="Retail / Shop">
+                  Retail / Shop
+                </option>
+
+                <option value="Other">
+                  Other
+                </option>
+
+              </select>
+
+              <span className="select-arrow">
+                ⌄
+              </span>
+
+            </div>
+
+          </div>
+
+
+          {/* PROJECT */}
+          <div className="final-form-field">
+
+            <label htmlFor="project_type">
+              PROJECT TYPE <sup>*</sup>
+            </label>
+
+            <div className="final-input final-select">
+
+              <span className="final-input-icon">
+                ▦
+              </span>
+
+              <select
+                id="project_type"
+                value={formData.project_type}
+                onChange={(event) =>
+                  setFormData({
+                    ...formData,
+                    project_type: event.target.value,
+                  })
+                }
+                required
+              >
+
+                <option value="">
+                  Select project type
+                </option>
+
+                <option value="Full Home Interior">
+                  Full Home Interior
+                </option>
+
+                <option value="Living Room Interior">
+                  Living Room Interior
+                </option>
+
+                <option value="Bedroom Interior">
+                  Bedroom Interior
+                </option>
+
+                <option value="Modular Kitchen">
+                  Modular Kitchen
+                </option>
+
+                <option value="Commercial Interior">
+                  Commercial Interior
+                </option>
+
+                <option value="Renovation">
+                  Renovation
+                </option>
+
+                <option value="Custom Furniture">
+                  Custom Furniture
+                </option>
+
+                <option value="Other">
+                  Other
+                </option>
+
+              </select>
+
+              <span className="select-arrow">
+                ⌄
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        {/* =================================================
+            BUDGET
+        ================================================= */}
+
+        <div className="final-form-field">
+
+          <label htmlFor="budget">
+            BUDGET <sup>*</sup>
+          </label>
+
+          <div className="final-input final-select">
+
+            <span className="final-input-icon budget-icon">
+              ₹
+            </span>
+
+            <select
+              id="budget"
+              value={formData.budget}
+              onChange={(event) =>
+                setFormData({
+                  ...formData,
+                  budget: event.target.value,
+                })
+              }
+              required
+            >
+
+              <option value="">
+                Select your budget
+              </option>
+
+              <option value="Below ₹10L">
+                Below ₹10L
+              </option>
+
+              <option value="₹10L - ₹15L">
+                ₹10L - ₹15L
+              </option>
+
+              <option value="₹15L - ₹25L">
+                ₹15L - ₹25L
+              </option>
+
+              <option value="₹25L - ₹40L">
+                ₹25L - ₹40L
+              </option>
+
+              <option value="₹40L+">
+                ₹40L+
+              </option>
+
+            </select>
+
+            <span className="select-arrow">
+              ⌄
+            </span>
+
+          </div>
+
+        </div>
+
+
+
+        {/* =================================================
+            MESSAGE
+        ================================================= */}
+
+        <div className="final-form-field">
+
+          <label htmlFor="message">
+            TELL US ABOUT YOUR PROJECT <sup>*</sup>
+          </label>
+
+          <div className="final-textarea">
+
+            <span className="textarea-icon">
+              ▢
+            </span>
+
+            <textarea
+              id="message"
+              rows={3}
+              placeholder="Tell us about your requirements, preferred style, timelines, or any specific details..."
+              value={formData.message}
+              onChange={(event) =>
+                setFormData({
+                  ...formData,
+                  message: event.target.value,
+                })
+              }
+              required
+            />
+
+          </div>
+
+        </div>
+
+
+
+        {/* =================================================
+            SUBMIT BUTTON
+        ================================================= */}
+
+        <button
+          type="submit"
+          className="final-submit-button"
+          disabled={isSubmitting}
+        >
+
+          <span>
+            {isSubmitting
+              ? "Submitting..."
+              : "Submit Inquiry"}
+          </span>
+
+          <span className="final-submit-arrow">
+            →
+          </span>
+
+        </button>
+
+
+        {/* MESSAGE */}
+        {submitMessage && (
+          <p className="final-submit-message">
+            {submitMessage}
+          </p>
+        )}
+
+
+
+        {/* =================================================
+            TRUST ROW
+        ================================================= */}
+
+        <div className="final-trust-row">
+
+          <div className="final-trust-item">
+            <span>♧</span>
+            <p>Free Consultation</p>
+          </div>
+
+          <div className="final-trust-divider" />
+
+          <div className="final-trust-item">
+            <span>◷</span>
+            <p>Quick Response</p>
+          </div>
+
+          <div className="final-trust-divider" />
+
+          <div className="final-trust-item">
+            <span>♡</span>
+            <p>Your Vision, Our Priority</p>
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
   </div>
+
 </section>
 
       {/* FOOTER */}
@@ -1396,18 +1828,33 @@ const goToPreviousFounder = () => {
             </p>
 
             <div className="socials">
-              <a href="" aria-label="Instagram">
-                IG
-              </a>
+  <a
+    href="https://www.instagram.com/_taraliving?utm_source=qr"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Instagram"
+  >
+    <FaInstagram />
+  </a>
 
-              <a href="#" aria-label="Pinterest">
-                PI
-              </a>
+  <a
+    href="https://www.facebook.com/"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Facebook"
+  >
+    <FaFacebookF />
+  </a>
 
-              <a href="#" aria-label="Facebook">
-                FB
-              </a>
-            </div>
+  <a
+    href="https://wa.me/918639114375"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="WhatsApp"
+  >
+    <FaWhatsapp />
+  </a>
+</div>
           </div>
 
           <div className="footer-column">
@@ -1434,11 +1881,11 @@ const goToPreviousFounder = () => {
             <h4>Let&apos;s Connect</h4>
 
             <a href="tel:+919876543210">
-              +91 98765 43210
+              +91 86391 14375
             </a>
 
-            <a href="mailto:hello@taraliving.com">
-              hello@taraliving.com
+            <a href="mailto:taraliving09@gmail.com">
+              taraliving09@gmail.com
             </a>
 
             <p>Hyderabad, India</p>
