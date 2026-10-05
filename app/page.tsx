@@ -8,22 +8,26 @@ import {
   FaFacebookF,
   FaWhatsapp,
 } from "react-icons/fa";
+import WelcomeIntro from "./components/WelcomeIntro";
 import ProcessSection from "@/app/components/ProcessSection";
 
 const founders = [
   {
     name: "Suma Hiremath",
     role: "Co-Founder",
-    image: "/images/founder.jpg",
+    image: "/images/founder1.jpg",
+    quote: "Beautiful, comfortable spaces with a strong sense of quality.",
+    tags: ["Timeless design", "Warmth", "Quality"],
     description:
-      "With a thoughtful approach to design and a deep appreciation for natural materials, Suma brings warmth, intention and personality into every Tara Living space.",
+      "With a keen eye for beauty, detail, and timeless design, she brings warmth and experience to Tara Living. Her passion for creating beautiful, comfortable spaces and her strong sense of quality help shape the brand’s vision and every project we take on.",
   },
   {
     name: "Swathi Hiremath",
     role: "Co-Founder",
-    image: "/images/swathi.png",
-    description:
-      "Swathi believes that beautiful interiors should feel personal, comfortable and timeless, creating spaces that reflect the people who live and work in them.",
+    image: "/images/swathi.jpg",
+    quote: "Every space should tell a story and feel uniquely its own.",
+    tags: ["Creative vision", "Functionality", "Individuality"],
+    description:"Driven by a deep passion for design, she believes every space should tell a story and feel uniquely its own. With a strong creative vision and an eye for detail, she brings together aesthetics, functionality, and individuality to create spaces that are not just beautiful, but truly meaningful. At Tara Living, she is dedicated to turning ideas into thoughtfully designed spaces that inspire, comfort, and stand the test of time."
   },
 ];
 
@@ -353,7 +357,7 @@ useEffect(() => {
       }
     },
     {
-      threshold: 0.5,
+      threshold: 0.2,
     }
   );
 
@@ -508,6 +512,8 @@ const goToPreviousFounder = () => {
 
 
   return (
+    <>
+    <WelcomeIntro/>
     <main className="site-main">
       {/* NAVIGATION */}
       {/* NAVIGATION */}
@@ -515,7 +521,7 @@ const goToPreviousFounder = () => {
             <div className="nav-inner">
               <a href="#home" className="brand">
                 <Image
-                  src="/images/logo.png"
+                  src="/images/logo1.png"
                   alt="Tara Living Logo"
                   width={462}
                   height={410}
@@ -527,9 +533,9 @@ const goToPreviousFounder = () => {
                   }}
                 />
 
-                <span>
+                <span className="brand-text">
                 <strong>TARA</strong>
-                <small>LIVING</small>
+                <small> LIVING</small>
               </span>
               </a>
 
@@ -788,138 +794,66 @@ const goToPreviousFounder = () => {
 
       {/* FOUNDERS */}
 <section id="about" className="founders-section">
-
   {/* TOP HEADER */}
-  <div className="founders-top reveal">
+<div className="founders-top reveal">
+  <h2 className="founders-heading">
+    <span className="founders-heading-script">Meet the</span>
+    <span className="founders-heading-main">FOUNDERS</span>
+  </h2>
 
-    <div className="founders-heading-wrap">
-      <p className="eyebrow">MEET THE</p>
+  <p className="founders-intro-text">
+    Two perspectives. One approach to thoughtful spaces.
+  </p>
+</div>
 
-      <h2 className="founders-heading">
-        FOUNDERS
-      </h2>
-    </div>
-
-    <div className="founders-intro">
-      <span className="founders-intro-line" />
-
-      <p>
-        Two perspectives.
-        <br />
-        One approach to thoughtful spaces.
-      </p>
-    </div>
-
-  </div>
-
-
-  {/* FOUNDERS COMPOSITION */}
-  <div className="founders-composition">
-
-    {/* SWATHI */}
-    <div className="founder-card founder-swathi reveal">
-
-      <div className="founder-photo">
-
-        <Image
-          src={founders[1].image}
-          alt={founders[1].name}
-          fill
-          sizes="(max-width: 768px) 88vw, 42vw"
-        />
-
-      </div>
-
-      <div className="founder-name-row">
-
-        <div>
-          <h3>
-            {founders[1].name}
-          </h3>
-
-          <span>
-            {founders[1].role}
-          </span>
+  {/* FOUNDER ROWS */}
+  <div className="founders-list">
+    {[
+      { person: founders[1], number: "01", reverse: false }, // Swathi
+      { person: founders[0], number: "02", reverse: true },  // Suma
+    ].map(({ person, number, reverse }, i) => (
+      <article
+        key={person.name}
+        className={`founder-row ${reverse ? "founder-row-reverse" : ""} reveal ${
+          i === 1 ? "delay-2" : ""
+        }`}
+      >
+        {/* PHOTO */}
+        <div className="founder-photo-wrap">
+          <span className="founder-photo-frame" aria-hidden="true" />
+          <div className="founder-photo">
+            <Image
+              src={person.image}
+              alt={person.name}
+              fill
+              sizes="(max-width: 768px) 88vw, 260px"
+            />
+          </div>
         </div>
 
-      </div>
-
-    </div>
-
-
-    {/* CONNECTING LINE */}
-    <div className="founders-connector">
-
-      <span className="connector-dot" />
-
-      <span className="connector-line" />
-
-      <span className="connector-dot connector-dot-end" />
-
-    </div>
-
-
-    {/* SUMA */}
-    <div className="founder-card founder-suma reveal delay-2">
-
-      <div className="founder-photo">
-
-        <Image
-          src={founders[0].image}
-          alt={founders[0].name}
-          fill
-          sizes="(max-width: 768px) 88vw, 42vw"
-        />
-
-        
-
-      </div>
-
-      <div className="founder-name-row">
-
-        <div>
-          <h3>
-            {founders[0].name}
-          </h3>
-
-          <span>
-            {founders[0].role}
+        {/* CONTENT */}
+        <div className="founder-content">
+          <span className="founder-numeral" aria-hidden="true">
+            {number}
           </span>
+
+          <div className="founder-content-inner">
+            <h3 className="founder-name">{person.name}</h3>
+            <span className="founder-role">{person.role}</span>
+
+            <p className="founder-quote">{person.quote}</p>
+            <p className="founder-bio">{person.description}</p>
+
+            <ul className="founder-tags">
+              {person.tags.map((tag) => (
+                <li key={tag}>{tag}</li>
+              ))}
+            </ul>
+          </div>
         </div>
-
-      </div>
-
-    </div>
-
-
-    {/* DESCRIPTIONS */}
-    <div className="founder-description founder-description-swathi reveal">
-
-      <span className="description-number">
-        01
-      </span>
-
-      <p>
-        {founders[1].description}
-      </p>
-
-    </div>
-
-
-    <div className="founder-description founder-description-suma reveal delay-2">
-
-      <span className="description-number">
-        02
-      </span>
-
-      <p>
-        {founders[0].description}
-      </p>
-
-    </div>
-
+      </article>
+    ))}
   </div>
-
 </section>
 
       {/* PROCESS */}
@@ -1806,7 +1740,7 @@ const goToPreviousFounder = () => {
             <a href="#home" className="brand footer-logo">
               <span className="brand-mark">
   <Image
-    src="/images/logo.png"
+    src="/images/logo1.png"
     alt="Tara Living"
     width={462}
     height={410}
@@ -1901,5 +1835,6 @@ const goToPreviousFounder = () => {
         </div>
       </footer>
     </main>
+    </>
   );
 }

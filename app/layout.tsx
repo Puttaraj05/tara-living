@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Bodoni_Moda } from "next/font/google";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,14 +13,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const bodoni = Bodoni_Moda({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-bodoni",
+});
+
 export const metadata: Metadata = {
   title: "Tara Living",
   description: "Thoughtful interior spaces by Tara Living",
   icons: {
-
-    icon: "/images/logo2.png",
-
-  }
+    icon: "/images/logo1.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,9 +32,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bodoni.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+      </body>
     </html>
   );
 }

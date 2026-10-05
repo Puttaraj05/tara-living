@@ -127,7 +127,7 @@ export default function AdminDashboard() {
 
           <div className="admin-brand-mark">
             <img
-              src="/images/logo2.png"
+              src="/images/logo1.png"
               alt="Tara Living"
             />
           </div>

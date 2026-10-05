@@ -11,7 +11,8 @@ type ClientStatus =
   | "New"
   | "Contacted"
   | "Site Visit"
-  | "Completed";
+  | "Completed"
+  | "Deal Not Done";
 
 type Client = {
   id: number;
@@ -32,6 +33,7 @@ const statusOptions: ClientStatus[] = [
   "Contacted",
   "Site Visit",
   "Completed",
+  "Deal Not Done",
 ];
 
 export default function ClientsAdminPage() {
@@ -157,6 +159,64 @@ export default function ClientsAdminPage() {
     }
   };
 
+  const deleteClient = async (client: Client) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to remove ${client.name}?\n\nThis will permanently delete this client inquiry.`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_URL}/api/contact/${client.id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        "Delete client failed:",
+        response.status,
+        errorText
+      );
+
+      throw new Error(
+        `Failed to delete client: ${response.status}`
+      );
+    }
+
+    // Remove from current list immediately
+    setClients((currentClients) =>
+      currentClients.filter(
+        (item) => item.id !== client.id
+      )
+    );
+
+    // Close modal if this client was open
+    setSelectedClient((currentClient) =>
+      currentClient?.id === client.id
+        ? null
+        : currentClient
+    );
+
+  } catch (error) {
+    console.error(
+      "Client deletion failed:",
+      error
+    );
+
+    alert(
+      "Unable to remove this client. Please try again."
+    );
+  }
+};
+
   const exportClientsToExcel = async () => {
     try {
       const response = await fetch(
@@ -231,6 +291,9 @@ export default function ClientsAdminPage() {
       case "Completed":
         return "tl-client-status-completed";
 
+      case "Deal Not Done":
+        return "tl-client-status-not-done";  
+
       default:
         return "";
     }
@@ -249,7 +312,7 @@ export default function ClientsAdminPage() {
 
           <div className="admin-brand-mark">
             <img
-              src="/images/logo.png"
+              src="/images/logo1.png"
               alt="Tara Living"
             />
           </div>
@@ -502,6 +565,28 @@ export default function ClientsAdminPage() {
             </small>
           </button>
 
+          <button
+            type="button"
+           className={`tl-stat-card ${
+             filter === "Deal Not Done"
+               ? "selected"
+               : ""
+           }`}
+           onClick={() =>
+             setFilter("Deal Not Done")
+           }
+          >
+            <span>DEAL NOT DONE</span>
+
+           <strong>
+             {getStatusCount("Deal Not Done")}
+           </strong>
+
+           <small>
+             Did not proceed
+            </small>
+          </button>
+
         </section>
 
 
@@ -688,64 +773,65 @@ export default function ClientsAdminPage() {
 
                       {/* ACTION */}
 
-                      <div className="tl-client-actions">
+<div className="tl-client-actions">
 
-                        <div>
+  <div className="tl-client-status-area">
 
-                          <select
-                            className={`tl-client-status ${getStatusClass(
-                              client.status
-                            )}`}
-                            value={
-                              client.status
-                            }
-                            onChange={(event) =>
-                              updateStatus(
-                                client.id,
-                                event.target
-                                  .value as ClientStatus
-                              )
-                            }
-                          >
+    <select
+      className={`tl-client-status ${getStatusClass(
+        client.status
+      )}`}
+      value={client.status}
+      onChange={(event) =>
+        updateStatus(
+          client.id,
+          event.target.value as ClientStatus
+        )
+      }
+    >
+      {statusOptions.map((status) => (
+        <option
+          key={status}
+          value={status}
+        >
+          {status}
+        </option>
+      ))}
+    </select>
 
-                            {statusOptions.map(
-                              (status) => (
+    <small>
+      {formatDate(client.created_at)}
+    </small>
 
-                                <option
-                                  key={status}
-                                  value={status}
-                                >
-                                  {status}
-                                </option>
-
-                              )
-                            )}
-
-                          </select>
-
-                          <small>
-                            {formatDate(
-                              client.created_at
-                            )}
-                          </small>
-
-                        </div>
+  </div>
 
 
-                        <button
-                          type="button"
-                          className="tl-view-client"
-                          onClick={() =>
-                            setSelectedClient(
-                              client
-                            )
-                          }
-                        >
-                          View
-                          <span>↗</span>
-                        </button>
+  <div className="tl-client-action-buttons">
 
-                      </div>
+    <button
+      type="button"
+      className="tl-view-client"
+      onClick={() =>
+        setSelectedClient(client)
+      }
+    >
+      VIEW
+      <span>↗</span>
+    </button>
+
+    <button
+      type="button"
+      className="tl-remove-client"
+      onClick={() =>
+        deleteClient(client)
+      }
+    >
+      REMOVE
+    </button>
+
+  </div>
+
+</div>
 
                     </article>
 

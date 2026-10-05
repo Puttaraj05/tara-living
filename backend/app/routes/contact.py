@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -6,7 +6,10 @@ from app.core.database import SessionLocal
 from app.models.contact import Contact
 from app.schemas.contact import ContactCreate
 from app.core.auth import require_admin
-
+from app.core.email import (
+    send_contact_notification,
+    send_client_confirmation,
+)
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
@@ -29,7 +32,7 @@ def get_db():
 # =========================================================
 
 @router.post("/")
-def create_contact(
+async def create_contact(
     contact: ContactCreate,
     db: Session = Depends(get_db),
 ):
@@ -48,6 +51,49 @@ def create_contact(
     db.commit()
     db.refresh(new_contact)
 
+    # =====================================================
+    # SEND EMAIL NOTIFICATIONS
+    # =====================================================
+
+    # -----------------------------------------------------
+    # Email to Tara Living
+    # -----------------------------------------------------
+
+    try:
+        await send_contact_notification(
+            name=contact.name,
+            email=contact.email,
+            phone=contact.phone,
+            city=contact.city,
+            property_type=contact.property_type,
+            project_type=contact.project_type,
+            budget=contact.budget,
+            message=contact.message,
+        )
+
+        print("✅ Owner notification sent")
+
+    except Exception as e:
+        print("❌ Owner email failed:", e)
+
+    # -----------------------------------------------------
+    # Confirmation email to client
+    # -----------------------------------------------------
+
+    try:
+        await send_client_confirmation(
+            name=contact.name,
+            email=contact.email,
+            property_type=contact.property_type,
+            project_type=contact.project_type,
+            city=contact.city,
+        )
+
+        print("✅ Client confirmation sent")
+
+    except Exception as e:
+        print("❌ Client confirmation failed:", e)
+
     return {
         "message": "Inquiry submitted successfully",
         "id": new_contact.id,
@@ -59,8 +105,10 @@ def create_contact(
 # =========================================================
 
 @router.get("/")
-def get_contacts(db: Session = Depends(get_db),admin=Depends(require_admin),):
-    
+def get_contacts(
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
     contacts = (
         db.query(Contact)
         .order_by(Contact.created_at.desc())
@@ -80,8 +128,21 @@ def update_contact_status(
     status: str,
     db: Session = Depends(get_db),
     admin=Depends(require_admin),
-    
 ):
+    allowed_statuses = [
+        "New",
+        "Contacted",
+        "Site Visit",
+        "Completed",
+        "Deal Not Done",
+    ]
+
+    if status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid client status",
+        )
+
     contact = (
         db.query(Contact)
         .filter(Contact.id == contact_id)
@@ -89,9 +150,10 @@ def update_contact_status(
     )
 
     if not contact:
-        return {
-            "message": "Client not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Client not found",
+        )
 
     contact.status = status
 
@@ -102,6 +164,36 @@ def update_contact_status(
         "message": "Client status updated successfully",
         "id": contact.id,
         "status": contact.status,
+    }
+
+# =========================================================
+# DELETE CLIENT INQUIRY
+# =========================================================
+
+@router.delete("/{contact_id}")
+def delete_contact(
+    contact_id: int,
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    contact = (
+        db.query(Contact)
+        .filter(Contact.id == contact_id)
+        .first()
+    )
+
+    if not contact:
+        raise HTTPException(
+            status_code=404,
+            detail="Client not found",
+        )
+
+    db.delete(contact)
+    db.commit()
+
+    return {
+        "message": "Client deleted successfully",
+        "id": contact_id,
     }
 
 
@@ -162,9 +254,9 @@ def export_contacts_to_excel(
         )
 
     # Add client data
-    for contact in contacts:
+    for index, contact in enumerate(contacts, start=1):
         worksheet.append([
-            contact.id,
+            index,
             contact.name,
             contact.email,
             contact.phone,

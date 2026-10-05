@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
           {/* Logo */}
           <div className="absolute left-5 top-5 z-20">
             <img
-              src="/images/logo2.png"
+              src="/images/logo1.png"
               alt="Tara Living"
               className="h-auto w-[50px] object-contain "
             />

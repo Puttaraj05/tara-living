@@ -126,7 +126,7 @@ export default function ProjectsAdminPage() {
       <aside className="admin-sidebar">
         <div className="admin-brand">
           <div className="admin-brand-mark">
-            <img src="/images/logo.png" alt="Tara Living" />
+            <img src="/images/logo1.png" alt="Tara Living" />
           </div>
 
           <div>

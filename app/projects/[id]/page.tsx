@@ -409,7 +409,20 @@ export default function ProjectDetailPage() {
 
           <div className="pp-footer-cols">
             <div>
-              <div className="pp-logo"><strong>TARA</strong> <small>LIVING</small> </div>
+              <div className="pp-logo">
+  <Image
+    src="/images/logo1.png"
+    alt="Tara Living Logo"
+    width={462}
+    height={410}
+    priority
+    className="logo"
+    style={{
+      width: "50px",
+      height: "auto",
+    }}
+  />
+</div>
               
               <p>
                 Interior design studio crafting calm, functional homes in warm,
