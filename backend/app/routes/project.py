@@ -2,13 +2,18 @@ import json
 import os
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.models.project import Project
 from app.schemas.project import ProjectCreate
 from app.core.auth import require_admin
+from app.core.uploads import (
+    MAX_IMAGE_SIZE,
+    MAX_VIDEO_SIZE,
+    validate_upload,
+)
 
 
 router = APIRouter(
@@ -55,7 +60,15 @@ async def upload_project_image(
         unique_filename,
     )
 
-    file_content = await file.read()
+    file_content = await validate_upload(
+
+    file=file,
+
+    allowed_types=allowed_types,
+
+    max_size=MAX_IMAGE_SIZE,
+
+   )
 
     with open(file_path, "wb") as buffer:
         buffer.write(file_content)
@@ -95,7 +108,15 @@ async def upload_project_video(
         unique_filename,
     )
 
-    file_content = await file.read()
+    file_content = await validate_upload(
+
+    file=file,
+
+    allowed_types=allowed_types,
+
+    max_size=MAX_VIDEO_SIZE,
+
+   )
 
     with open(file_path, "wb") as buffer:
         buffer.write(file_content)
@@ -139,7 +160,15 @@ async def upload_project_gallery_image(
         unique_filename,
     )
 
-    file_content = await file.read()
+    file_content = await validate_upload(
+
+    file=file,
+
+    allowed_types=allowed_types,
+
+    max_size=MAX_IMAGE_SIZE,
+
+    )
 
     with open(file_path, "wb") as buffer:
         buffer.write(file_content)
@@ -214,9 +243,10 @@ def get_project(
     )
 
     if not project:
-        return {
-            "message": "Project not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
 
     return project
 #update project
@@ -234,9 +264,10 @@ def update_project(
     )
 
     if not existing_project:
-        return {
-            "message": "Project not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
 
     existing_project.title = project.title
     existing_project.location = project.location
@@ -279,9 +310,10 @@ def delete_project(
     )
 
     if not project:
-        return {
-            "message": "Project not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
 
     db.delete(project)
     db.commit()

@@ -1,13 +1,17 @@
 import os
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.models.service import Service
 from app.schemas.service import ServiceCreate
 from app.core.auth import require_admin
+from app.core.uploads import (
+    MAX_IMAGE_SIZE,
+    validate_upload,
+)
 
 
 router = APIRouter(
@@ -31,15 +35,16 @@ async def upload_service_image(
     admin=Depends(require_admin),
 ):
     allowed_types = {
-        "image/jpeg",
-        "image/png",
-        "image/webp",
+      "image/jpeg",
+     "image/png",
+      "image/webp",
     }
 
-    if file.content_type not in allowed_types:
-        return {
-            "message": "Only JPG, PNG and WEBP images are allowed"
-        }
+    file_content = await validate_upload(
+      file=file,
+       allowed_types=allowed_types,
+       max_size=MAX_IMAGE_SIZE,
+    )
 
     upload_directory = "uploads/services"
 
@@ -50,11 +55,9 @@ async def upload_service_image(
     unique_filename = f"{uuid.uuid4()}{file_extension}"
 
     file_path = os.path.join(
-        upload_directory,
-        unique_filename,
+     upload_directory,
+     unique_filename,
     )
-
-    file_content = await file.read()
 
     with open(file_path, "wb") as buffer:
         buffer.write(file_content)
@@ -116,9 +119,10 @@ def get_service(
     )
 
     if not service:
-        return {
-            "message": "Service not found"
-        }
+        raise HTTPException(
+           status_code=404,
+           detail="Service not found",
+       )
 
     return service
 
@@ -138,9 +142,10 @@ def update_service(
     )
 
     if not existing_service:
-        return {
-            "message": "Service not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Service not found",
+        )
 
     existing_service.title = service.title
     existing_service.category = service.category
@@ -170,9 +175,10 @@ def delete_service(
     )
 
     if not service:
-        return {
-            "message": "Service not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Service not found",
+        )
 
     db.delete(service)
     db.commit()

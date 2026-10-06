@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+import logging
 
 from app.core.database import SessionLocal
 from app.models.contact import Contact
@@ -17,7 +18,7 @@ from io import BytesIO
 
 
 router = APIRouter(prefix="/api/contact", tags=["Contact"])
-
+logger = logging.getLogger(__name__)
 
 def get_db():
     db = SessionLocal()
@@ -71,10 +72,10 @@ async def create_contact(
             message=contact.message,
         )
 
-        print("✅ Owner notification sent")
+        logger.info("Owner notification sent")
 
     except Exception as e:
-        print("❌ Owner email failed:", e)
+        logger.exception("Owner email failed")
 
     # -----------------------------------------------------
     # Confirmation email to client
@@ -89,10 +90,10 @@ async def create_contact(
             city=contact.city,
         )
 
-        print("✅ Client confirmation sent")
+        logger.info("Client confirmation sent")
 
     except Exception as e:
-        print("❌ Client confirmation failed:", e)
+        logger.exception("Client confirmation failed")
 
     return {
         "message": "Inquiry submitted successfully",

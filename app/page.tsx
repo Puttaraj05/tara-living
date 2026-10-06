@@ -230,7 +230,7 @@ useEffect(() => {
   const fetchServices = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/services/"
+        `${API_URL}/api/services/`
       );
 
       if (!response.ok) {
@@ -250,7 +250,7 @@ useEffect(() => {
           title: service.title,
           description: service.description,
           image: service.image.startsWith("/uploads")
-            ? `http://127.0.0.1:8000${service.image}`
+            ? `${API_URL}${service.image}`
             : service.image,
           services:
             service.service_items || [],
@@ -301,7 +301,7 @@ useEffect(() => {
   const fetchTestimonials = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/testimonials/"
+        `${API_URL}/api/testimonials/`
       );
 
       if (!response.ok) {
@@ -395,7 +395,7 @@ const [formData, setFormData] = useState({
     setSubmitMessage("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/contact/", {
+      const response = await fetch(`${API_URL}/api/contact/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1030,9 +1030,9 @@ const goToPreviousFounder = () => {
 
     const imageUrl = testimonial.image
       ? testimonial.image.startsWith("/uploads")
-        ? `http://127.0.0.1:8000${testimonial.image}`
-        : testimonial.image
-      : null;
+       ? `${API_URL}${testimonial.image}`
+       : testimonial.image
+     : null;
 
     let positionClass = "testimonial-slide-hidden";
 

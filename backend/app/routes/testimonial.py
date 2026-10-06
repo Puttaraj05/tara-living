@@ -1,13 +1,17 @@
 import os
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.models.testimonial import Testimonial
 from app.schemas.testimonial import TestimonialCreate
 from app.core.auth import require_admin
+from app.core.uploads import (
+    MAX_IMAGE_SIZE,
+    validate_upload,
+)
 
 
 router = APIRouter(
@@ -58,7 +62,15 @@ async def upload_testimonial_image(
         unique_filename,
     )
 
-    file_content = await file.read()
+    file_content = await validate_upload(
+
+    file=file,
+
+    allowed_types=allowed_types,
+
+    max_size=MAX_IMAGE_SIZE,
+
+    )
 
     with open(file_path, "wb") as buffer:
         buffer.write(file_content)
@@ -121,9 +133,10 @@ def get_testimonial(
     )
 
     if not testimonial:
-        return {
-            "message": "Testimonial not found"
-        }
+       raise HTTPException(
+           status_code=404,
+           detail="Testimonial not found",
+       )
 
     return testimonial
 
@@ -144,9 +157,10 @@ def update_testimonial(
     )
 
     if not existing_testimonial:
-        return {
-            "message": "Testimonial not found"
-        }
+       raise HTTPException(
+           status_code=404,
+           detail="Testimonial not found",
+       )
 
     existing_testimonial.client_name = (
         testimonial.client_name
@@ -197,9 +211,10 @@ def delete_testimonial(
     )
 
     if not testimonial:
-        return {
-            "message": "Testimonial not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Testimonial not found",
+        )
 
     db.delete(testimonial)
     db.commit()

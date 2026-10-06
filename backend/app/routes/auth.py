@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Response
 from jose import jwt
@@ -18,13 +19,21 @@ pwd_context = CryptContext(
 )
 
 
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH", "")
-AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH")
+AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
+
+APP_ENV = os.getenv("APP_ENV", "development").lower()
 
 AUTH_COOKIE_SECURE = (
-    os.getenv("AUTH_COOKIE_SECURE", "false").lower() == "true"
+    os.getenv(
+        "AUTH_COOKIE_SECURE",
+        "true" if APP_ENV == "production" else "false",
+    ).lower()
+    == "true"
 )
+
+JWT_EXPIRE_HOURS = 8
 
 
 class LoginRequest(BaseModel):
@@ -37,21 +46,30 @@ def login(
     credentials: LoginRequest,
     response: Response,
 ):
-    # Check username
-    if credentials.username != ADMIN_USERNAME:
+    if not ADMIN_USERNAME:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid username or password",
+            status_code=500,
+            detail="Admin username is not configured",
         )
 
-    # Make sure password hash exists
     if not ADMIN_PASSWORD_HASH:
         raise HTTPException(
             status_code=500,
             detail="Admin password is not configured",
         )
 
-    # Check password
+    if not AUTH_SECRET_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="Authentication secret is not configured",
+        )
+
+    if credentials.username != ADMIN_USERNAME:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid username or password",
+        )
+
     try:
         password_valid = pwd_context.verify(
             credentials.password,
@@ -66,31 +84,27 @@ def login(
             detail="Invalid username or password",
         )
 
-    # Make sure secret exists
-    if not AUTH_SECRET_KEY:
-        raise HTTPException(
-            status_code=500,
-            detail="Authentication secret is not configured",
-        )
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(hours=JWT_EXPIRE_HOURS)
 
-    # Create JWT token
     token = jwt.encode(
         {
             "sub": credentials.username,
             "role": "admin",
+            "iat": now,
+            "exp": expires_at,
         },
         AUTH_SECRET_KEY,
         algorithm="HS256",
     )
 
-    # Store token in secure HTTP-only cookie
     response.set_cookie(
         key="tara_admin_token",
         value=token,
         httponly=True,
         secure=AUTH_COOKIE_SECURE,
-        samesite="lax",
-        max_age=8 * 60 * 60,
+        samesite="none" if APP_ENV == "production" else "lax",
+        max_age=JWT_EXPIRE_HOURS * 60 * 60,
         path="/",
     )
 
@@ -99,13 +113,17 @@ def login(
         "username": credentials.username,
     }
 
+
 @router.post("/logout")
 def logout(response: Response):
     response.delete_cookie(
         key="tara_admin_token",
+        httponly=True,
+        secure=AUTH_COOKIE_SECURE,
+        samesite="none" if APP_ENV == "production" else "lax",
         path="/",
     )
 
     return {
-        "message": "Logged out successfully"
+        "message": "Logged out successfully",
     }
