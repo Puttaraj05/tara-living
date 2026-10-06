@@ -21,6 +21,7 @@ Base.metadata.create_all(bind=engine)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 UPLOADS_DIR = BASE_DIR / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 app = FastAPI(
