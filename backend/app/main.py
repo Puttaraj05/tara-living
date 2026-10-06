@@ -1,8 +1,6 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from pathlib import Path
 
 from app.core.database import Base, engine
 from app.core.config import FRONTEND_URL
@@ -19,21 +17,10 @@ from app.routes.auth import router as auth_router
 Base.metadata.create_all(bind=engine)
 
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-UPLOADS_DIR = BASE_DIR / "uploads"
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-
-
 app = FastAPI(
     title="Tara Living API",
     description="Backend API for Tara Living Interior Design",
     version="1.0.0",
-)
-
-app.mount(
-    "/uploads",
-    StaticFiles(directory=UPLOADS_DIR),
-    name="uploads",
 )
 
 app.add_middleware(
