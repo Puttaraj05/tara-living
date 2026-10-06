@@ -1,4 +1,3 @@
-import json
 import os
 import uuid
 
@@ -14,7 +13,10 @@ from app.core.uploads import (
     MAX_VIDEO_SIZE,
     validate_upload,
 )
-
+from app.core.r2 import (
+    upload_file_to_r2,
+    get_r2_public_url,
+)
 
 router = APIRouter(
     prefix="/api/projects",
@@ -43,39 +45,26 @@ async def upload_project_image(
         "image/webp",
     }
 
-    if file.content_type not in allowed_types:
-        return {
-            "message": "Only JPG, PNG and WEBP images are allowed"
-        }
-
-    upload_directory = "uploads/projects"
-
-    os.makedirs(upload_directory, exist_ok=True)
-
-    file_extension = os.path.splitext(file.filename)[1].lower()
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-
-    file_path = os.path.join(
-        upload_directory,
-        unique_filename,
+    await validate_upload(
+        file=file,
+        allowed_types=allowed_types,
+        max_size=MAX_IMAGE_SIZE,
     )
 
-    file_content = await validate_upload(
+    extension = os.path.splitext(file.filename)[1].lower()
+    unique_filename = f"{uuid.uuid4()}{extension}"
 
-    file=file,
+    object_key = f"projects/{unique_filename}"
 
-    allowed_types=allowed_types,
-
-    max_size=MAX_IMAGE_SIZE,
-
-   )
-
-    with open(file_path, "wb") as buffer:
-        buffer.write(file_content)
+    upload_file_to_r2(
+        file.file,
+        object_key,
+        file.content_type,
+    )
 
     return {
         "message": "Project image uploaded successfully",
-        "image": f"/uploads/projects/{unique_filename}",
+        "image": get_r2_public_url(object_key),
     }
 
 # Upload project video
@@ -90,40 +79,26 @@ async def upload_project_video(
         "video/quicktime",
     }
 
-    if file.content_type not in allowed_types:
-        return {
-            "message": "Only MP4, WEBM and MOV videos are allowed"
-        }
-
-    upload_directory = "uploads/projects/videos"
-
-    os.makedirs(upload_directory, exist_ok=True)
-
-    file_extension = os.path.splitext(file.filename)[1].lower()
-
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-
-    file_path = os.path.join(
-        upload_directory,
-        unique_filename,
+    await validate_upload(
+        file=file,
+        allowed_types=allowed_types,
+        max_size=MAX_VIDEO_SIZE,
     )
 
-    file_content = await validate_upload(
+    extension = os.path.splitext(file.filename)[1].lower()
+    unique_filename = f"{uuid.uuid4()}{extension}"
 
-    file=file,
+    object_key = f"projects/videos/{unique_filename}"
 
-    allowed_types=allowed_types,
-
-    max_size=MAX_VIDEO_SIZE,
-
-   )
-
-    with open(file_path, "wb") as buffer:
-        buffer.write(file_content)
+    upload_file_to_r2(
+        file.file,
+        object_key,
+        file.content_type,
+    )
 
     return {
         "message": "Project video uploaded successfully",
-        "video": f"/uploads/projects/videos/{unique_filename}",
+        "video": get_r2_public_url(object_key),
     }
 
 # Upload project gallery image
@@ -138,47 +113,26 @@ async def upload_project_gallery_image(
         "image/webp",
     }
 
-    if file.content_type not in allowed_types:
-        return {
-            "message": "Only JPG, PNG and WEBP images are allowed"
-        }
-
-    upload_directory = "uploads/projects/gallery"
-
-    os.makedirs(upload_directory, exist_ok=True)
-
-    file_extension = os.path.splitext(
-        file.filename
-    )[1].lower()
-
-    unique_filename = (
-        f"{uuid.uuid4()}{file_extension}"
+    await validate_upload(
+        file=file,
+        allowed_types=allowed_types,
+        max_size=MAX_IMAGE_SIZE,
     )
 
-    file_path = os.path.join(
-        upload_directory,
-        unique_filename,
+    extension = os.path.splitext(file.filename)[1].lower()
+    unique_filename = f"{uuid.uuid4()}{extension}"
+
+    object_key = f"projects/gallery/{unique_filename}"
+
+    upload_file_to_r2(
+        file.file,
+        object_key,
+        file.content_type,
     )
-
-    file_content = await validate_upload(
-
-    file=file,
-
-    allowed_types=allowed_types,
-
-    max_size=MAX_IMAGE_SIZE,
-
-    )
-
-    with open(file_path, "wb") as buffer:
-        buffer.write(file_content)
 
     return {
         "message": "Project gallery image uploaded successfully",
-        "image": (
-            f"/uploads/projects/gallery/"
-            f"{unique_filename}"
-        ),
+        "image": get_r2_public_url(object_key),
     }
 
 # Create project

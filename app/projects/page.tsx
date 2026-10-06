@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getMediaUrl } from "../../lib/media";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -19,24 +20,9 @@ type Project = {
 ========================================================= */
 
 function getProjectImage(image: string | null | undefined) {
-  if (!image || image === "string") {
-    return "/images/service-1.jpg";
-  }
-
-  if (
-    image.startsWith("http://") ||
-    image.startsWith("https://")
-  ) {
-    return image;
-  }
-
-  if (image.startsWith("/uploads/")) {
-    return `${API_URL}${image}`;
-  }
-
-  return image;
+  const url = getMediaUrl(image);
+  return url || "/images/service-1.jpg";
 }
-
 
 /* =========================================================
    PROJECT DESCRIPTIONS

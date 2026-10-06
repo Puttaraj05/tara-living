@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getMediaUrl } from "../lib/media";
 import { useEffect , useState } from "react";
 import {
   FaInstagram,
@@ -182,8 +183,7 @@ export default function Home() {
   const [projects, setProjects] =
     useState<Project[]>([]);
 
-  const [projectsLoading, setProjectsLoading] =
-    useState(true);
+  const [, setProjectsLoading] = useState(true);
 
   const [activeProject, setActiveProject] = useState(0);   
 
@@ -249,9 +249,7 @@ useEffect(() => {
           number: String(index + 1).padStart(2, "0"),
           title: service.title,
           description: service.description,
-          image: service.image.startsWith("/uploads")
-            ? `${API_URL}${service.image}`
-            : service.image,
+          image: getMediaUrl(service.image),
           services:
             service.service_items || [],
         })
@@ -326,6 +324,8 @@ useEffect(() => {
 }, []);
 
 // AUTOMATIC TESTIMONIAL SLIDER
+const [testimonialIndex, setTestimonialIndex] =
+  useState(0);
 
 useEffect(() => {
   if (testimonials.length < 4) {
@@ -366,13 +366,10 @@ useEffect(() => {
   return () => observer.disconnect();
 }, []);
 
-const [activeFounder, setActiveFounder] = useState(0);
-const [slideDirection, setSlideDirection] =
-  useState<"next" | "prev">("next");
+
 
 // TESTIMONIAL SLIDER
-const [testimonialIndex, setTestimonialIndex] =
-  useState(0);
+
 
 const [formData, setFormData] = useState({
     name: "",
@@ -432,33 +429,6 @@ const [formData, setFormData] = useState({
     }
   };
 
-  useEffect(() => {
-  const timer = setInterval(() => {
-    setSlideDirection("next");
-
-    setActiveFounder((current) =>
-      current === founders.length - 1 ? 0 : current + 1
-    );
-  }, 6000);
-
-  return () => clearInterval(timer);
-}, []);
-
-const goToNextFounder = () => {
-  setSlideDirection("next");
-
-  setActiveFounder((current) =>
-    current === founders.length - 1 ? 0 : current + 1
-  );
-};
-
-const goToPreviousFounder = () => {
-  setSlideDirection("prev");
-
-  setActiveFounder((current) =>
-    current === 0 ? founders.length - 1 : current - 1
-  );
-};
 
   useEffect(() => {
   const elements = document.querySelectorAll(".reveal");
@@ -489,25 +459,11 @@ const goToPreviousFounder = () => {
   };
 }, [projects]);
 
-  const getProjectImage = (
+const getProjectImage = (
   image: string | null | undefined
 ) => {
-  if (!image || image === "string") {
-    return "/images/service-1.jpg";
-  }
-
-  if (
-    image.startsWith("http://") ||
-    image.startsWith("https://")
-  ) {
-    return image;
-  }
-
-  if (image.startsWith("/uploads/")) {
-    return `${API_URL}${image}`;
-  }
-
-  return image;
+  const url = getMediaUrl(image);
+  return url || "/images/service-1.jpg";
 };
 
 
@@ -1028,11 +984,7 @@ const goToPreviousFounder = () => {
       relativePosition -= total;
     }
 
-    const imageUrl = testimonial.image
-      ? testimonial.image.startsWith("/uploads")
-       ? `${API_URL}${testimonial.image}`
-       : testimonial.image
-     : null;
+    const imageUrl = getMediaUrl(testimonial.image);
 
     let positionClass = "testimonial-slide-hidden";
 

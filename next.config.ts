@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
         port: "8000",
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "pub-955bb8a974c240839f531e19760e4c8c.r2.dev",
+        pathname: "/**",
+      },
     ],
   },
 };

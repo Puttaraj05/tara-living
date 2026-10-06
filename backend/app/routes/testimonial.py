@@ -2,6 +2,7 @@ import os
 import uuid
 
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from app.core.r2 import upload_file_to_r2, get_r2_public_url
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
@@ -40,44 +41,26 @@ async def upload_testimonial_image(
         "image/webp",
     }
 
-    if file.content_type not in allowed_types:
-        return {
-            "message": "Only JPG, PNG and WEBP images are allowed"
-        }
-
-    upload_directory = "uploads/testimonials"
-
-    os.makedirs(upload_directory, exist_ok=True)
-
-    file_extension = os.path.splitext(
-        file.filename
-    )[1].lower()
-
-    unique_filename = (
-        f"{uuid.uuid4()}{file_extension}"
+    await validate_upload(
+        file=file,
+        allowed_types=allowed_types,
+        max_size=MAX_IMAGE_SIZE,
     )
 
-    file_path = os.path.join(
-        upload_directory,
-        unique_filename,
+    extension = os.path.splitext(file.filename)[1].lower()
+    unique_filename = f"{uuid.uuid4()}{extension}"
+
+    object_key = f"testimonials/{unique_filename}"
+
+    upload_file_to_r2(
+        file.file,
+        object_key,
+        file.content_type,
     )
-
-    file_content = await validate_upload(
-
-    file=file,
-
-    allowed_types=allowed_types,
-
-    max_size=MAX_IMAGE_SIZE,
-
-    )
-
-    with open(file_path, "wb") as buffer:
-        buffer.write(file_content)
 
     return {
         "message": "Testimonial image uploaded successfully",
-        "image": f"/uploads/testimonials/{unique_filename}",
+        "image": get_r2_public_url(object_key),
     }
 
 

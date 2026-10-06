@@ -448,7 +448,7 @@ export default function EditProjectPage() {
       let clientVideoPath =
         project.client_video || "";
 
-      let galleryImagePaths = [
+      const galleryImagePaths = [
         ...existingGalleryImages,
       ];
 

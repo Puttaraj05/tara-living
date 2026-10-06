@@ -12,6 +12,10 @@ from app.core.uploads import (
     MAX_IMAGE_SIZE,
     validate_upload,
 )
+from app.core.r2 import (
+    upload_file_to_r2,
+    get_r2_public_url,
+)
 
 
 router = APIRouter(
@@ -35,36 +39,31 @@ async def upload_service_image(
     admin=Depends(require_admin),
 ):
     allowed_types = {
-      "image/jpeg",
-     "image/png",
-      "image/webp",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
     }
 
-    file_content = await validate_upload(
-      file=file,
-       allowed_types=allowed_types,
-       max_size=MAX_IMAGE_SIZE,
+    await validate_upload(
+        file=file,
+        allowed_types=allowed_types,
+        max_size=MAX_IMAGE_SIZE,
     )
 
-    upload_directory = "uploads/services"
+    extension = os.path.splitext(file.filename)[1].lower()
+    unique_filename = f"{uuid.uuid4()}{extension}"
 
-    os.makedirs(upload_directory, exist_ok=True)
+    object_key = f"services/{unique_filename}"
 
-    file_extension = os.path.splitext(file.filename)[1].lower()
-
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-
-    file_path = os.path.join(
-     upload_directory,
-     unique_filename,
+    upload_file_to_r2(
+        file.file,
+        object_key,
+        file.content_type,
     )
-
-    with open(file_path, "wb") as buffer:
-        buffer.write(file_content)
 
     return {
         "message": "Service image uploaded successfully",
-        "image": f"/uploads/services/{unique_filename}",
+        "image": get_r2_public_url(object_key),
     }
 
 # Create service

@@ -11,6 +11,7 @@ import Reveal from "../../components/Reveal";
 import { Lines, Words } from "../../components/TextReveal";
 import ParallaxImg from "../../components/ParallaxImg";
 import ScrollProgress from "../../components/ScrollProgress";
+import { getMediaUrl } from "../../../lib/media";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -35,11 +36,6 @@ type Project = {
   gallery_images: string | string[] | null;
 };
 
-function getMediaUrl(path: string | null | undefined) {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  return `${API_URL}${path}`;
-}
 
 function parseGallery(gallery: string | string[] | null): string[] {
   if (!gallery) return [];
@@ -126,30 +122,6 @@ export default function ProjectDetailPage() {
   const clientVideo = getMediaUrl(project.client_video);
   const projectNo = String(project.id).padStart(2, "0");
 
-  /* bento: images cycle through the gallery, fall back to hero */
-  const pool = [gallery[1], gallery[2], gallery[3], gallery[0]].filter(
-    Boolean
-  ) as string[];
-  const pic = (i: number) =>
-    getMediaUrl(pool.length ? pool[i % pool.length] : project.image);
-
-  const cards = [
-    { no: "01", label: "Materials", text: project.materials },
-    { no: "02", label: "Lighting", text: project.lighting },
-    { no: "03", label: "Space", text: project.space_story },
-    { no: "04", label: project.category, text: project.location },
-  ];
-
-  const tiles = [
-    { type: "img", i: 0, pos: "pp-a" },
-    { type: "card", i: 0, pos: "pp-b" },
-    { type: "card", i: 1, pos: "pp-c" },
-    { type: "img", i: 1, pos: "pp-d" },
-    { type: "img", i: 2, pos: "pp-e" },
-    { type: "card", i: 2, pos: "pp-f" },
-    { type: "card", i: 3, pos: "pp-g" },
-    { type: "img", i: 3, pos: "pp-h" },
-  ];
 
   return (
     <main className="pp-page">
