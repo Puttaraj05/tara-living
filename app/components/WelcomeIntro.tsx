@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function WelcomeIntro() {
@@ -31,13 +30,12 @@ export default function WelcomeIntro() {
       }`}
     >
       <div className="welcome-intro-inner">
+
         <div className="welcome-brand">
-          <Image
+          <img
             src="/images/logo1.png"
             alt="Tara Living"
-            width={240}
-            height={100}
-            priority
+            loading="eager"
             className="welcome-logo"
           />
         </div>
@@ -55,6 +53,7 @@ export default function WelcomeIntro() {
         <div className="welcome-tagline">
           A SPACE, CONSIDERED.
         </div>
+
       </div>
     </div>
   );

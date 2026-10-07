@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 type ProjectGalleryProps = { images: string[] };
@@ -46,13 +45,13 @@ export default function ProjectGallery({ images }: ProjectGalleryProps) {
         const dist = (r.left + r.width / 2 - vw / 2) / vw;
         const d = Math.min(Math.abs(dist), 0.8);
 
+        /* focus effect: centre photo is full size, neighbours recede */
         item.style.transform = `scale(${1 - d * 0.14})`;
         item.style.opacity = `${1 - d * 0.55}`;
 
+        /* parallax inside the frame */
         const img = item.querySelector<HTMLImageElement>("img");
-        if (img) {
-          img.style.transform = `translate3d(${dist * -80}px,0,0) scale(1.2)`;
-        }
+        if (img) img.style.transform = `translate3d(${dist * -80}px,0,0) scale(1.2)`;
 
         if (Math.abs(dist) < bestDist) {
           bestDist = Math.abs(dist);
@@ -106,7 +105,6 @@ export default function ProjectGallery({ images }: ProjectGalleryProps) {
               <em>at the space.</em>
             </h2>
           </div>
-
           <div className="pg-count">
             <b>{pad(index + 1)}</b>
             <span>/ {pad(images.length)}</span>
@@ -117,16 +115,11 @@ export default function ProjectGallery({ images }: ProjectGalleryProps) {
           {images.map((image, i) => (
             <div className="pg-item" key={`${image}-${i}`}>
               <div className="pg-image">
-                <Image
+                <img
                   src={image}
                   alt={`Project interior ${i + 1}`}
-                  fill
-                  sizes="(max-width: 768px) 85vw, 60vw"
-                  priority={i < 2}
-                  style={{
-                    objectFit: "cover",
-                    transform: "scale(1.2)",
-                  }}
+                  loading={i < 2 ? "eager" : "lazy"}
+                  decoding="async"
                 />
               </div>
             </div>

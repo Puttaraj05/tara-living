@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { getMediaUrl } from "../lib/media";
 import { useEffect , useState } from "react";
 import {
   FaInstagram,
@@ -183,7 +182,8 @@ export default function Home() {
   const [projects, setProjects] =
     useState<Project[]>([]);
 
-  const [, setProjectsLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] =
+    useState(true);
 
   const [activeProject, setActiveProject] = useState(0);   
 
@@ -230,7 +230,7 @@ useEffect(() => {
   const fetchServices = async () => {
     try {
       const response = await fetch(
-        `${API_URL}/api/services/`
+        "http://127.0.0.1:8000/api/services/"
       );
 
       if (!response.ok) {
@@ -249,7 +249,9 @@ useEffect(() => {
           number: String(index + 1).padStart(2, "0"),
           title: service.title,
           description: service.description,
-          image: getMediaUrl(service.image),
+          image: service.image.startsWith("/uploads")
+            ? `http://127.0.0.1:8000${service.image}`
+            : service.image,
           services:
             service.service_items || [],
         })
@@ -299,7 +301,7 @@ useEffect(() => {
   const fetchTestimonials = async () => {
     try {
       const response = await fetch(
-        `${API_URL}/api/testimonials/`
+        "http://127.0.0.1:8000/api/testimonials/"
       );
 
       if (!response.ok) {
@@ -324,8 +326,6 @@ useEffect(() => {
 }, []);
 
 // AUTOMATIC TESTIMONIAL SLIDER
-const [testimonialIndex, setTestimonialIndex] =
-  useState(0);
 
 useEffect(() => {
   if (testimonials.length < 4) {
@@ -366,10 +366,13 @@ useEffect(() => {
   return () => observer.disconnect();
 }, []);
 
-
+const [activeFounder, setActiveFounder] = useState(0);
+const [slideDirection, setSlideDirection] =
+  useState<"next" | "prev">("next");
 
 // TESTIMONIAL SLIDER
-
+const [testimonialIndex, setTestimonialIndex] =
+  useState(0);
 
 const [formData, setFormData] = useState({
     name: "",
@@ -392,7 +395,7 @@ const [formData, setFormData] = useState({
     setSubmitMessage("");
 
     try {
-      const response = await fetch(`${API_URL}/api/contact/`, {
+      const response = await fetch("http://127.0.0.1:8000/api/contact/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -429,6 +432,33 @@ const [formData, setFormData] = useState({
     }
   };
 
+  useEffect(() => {
+  const timer = setInterval(() => {
+    setSlideDirection("next");
+
+    setActiveFounder((current) =>
+      current === founders.length - 1 ? 0 : current + 1
+    );
+  }, 6000);
+
+  return () => clearInterval(timer);
+}, []);
+
+const goToNextFounder = () => {
+  setSlideDirection("next");
+
+  setActiveFounder((current) =>
+    current === founders.length - 1 ? 0 : current + 1
+  );
+};
+
+const goToPreviousFounder = () => {
+  setSlideDirection("prev");
+
+  setActiveFounder((current) =>
+    current === 0 ? founders.length - 1 : current - 1
+  );
+};
 
   useEffect(() => {
   const elements = document.querySelectorAll(".reveal");
@@ -459,11 +489,25 @@ const [formData, setFormData] = useState({
   };
 }, [projects]);
 
-const getProjectImage = (
+  const getProjectImage = (
   image: string | null | undefined
 ) => {
-  const url = getMediaUrl(image);
-  return url || "/images/service-1.jpg";
+  if (!image || image === "string") {
+    return "/images/service-1.jpg";
+  }
+
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://")
+  ) {
+    return image;
+  }
+
+  if (image.startsWith("/uploads/")) {
+    return `${API_URL}${image}`;
+  }
+
+  return image;
 };
 
 
@@ -984,7 +1028,11 @@ const getProjectImage = (
       relativePosition -= total;
     }
 
-    const imageUrl = getMediaUrl(testimonial.image);
+    const imageUrl = testimonial.image
+      ? testimonial.image.startsWith("/uploads")
+        ? `http://127.0.0.1:8000${testimonial.image}`
+        : testimonial.image
+      : null;
 
     let positionClass = "testimonial-slide-hidden";
 
