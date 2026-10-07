@@ -129,7 +129,7 @@ export default function AdminLoginPage() {
             {/* Mobile logo */}
             <div className="mb-10 flex justify-center lg:hidden">
               <img
-                src="/images/logo.png"
+                src="/images/logo1.png"
                 alt="Tara Living"
                 className="h-auto w-[165px] object-contain"
               />
