@@ -15762,28 +15762,749 @@ h1 em {
 .sv-bar { height: 100%; background: var(--sand); transform-origin: left; transform: scaleX(0); }
 
 /* ---------- gallery ---------- */
-.pg-section { position: relative; background: var(--olive-dark); color: var(--cream); }
-.pg-frame { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; display: flex; flex-direction: column; justify-content: center; gap: 2.2rem; }
-.pg-heading { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 5vw; }
-.pg-eyebrow { margin: 0 0 1rem; font-size: .7rem; letter-spacing: .3em; color: var(--sand); }
-.pg-heading h2 { margin: 0; font-family: var(--font-serif, "Playfair Display", Georgia, serif); font-weight: 500; font-size: clamp(2rem, 4.5vw, 3.8rem); line-height: 1.05; color: var(--white); }
-.pg-heading em { font-style: italic; font-weight: 400; }
-.pg-count { font-family: var(--font-serif, "Playfair Display", Georgia, serif); display: flex; align-items: baseline; gap: .5rem; }
-.pg-count b { font-weight: 400; font-size: clamp(2rem, 4vw, 3.4rem); color: var(--sand); }
-.pg-count span { opacity: .6; }
-.pg-track { display: flex; gap: 2.5vw; padding: 0 5vw; width: max-content; will-change: transform; }
-.pg-item { flex: 0 0 auto; will-change: transform, opacity; }
-.pg-image { width: min(46vw, 640px); height: min(48vh, 440px); overflow: hidden; border-radius: 18px; }
-.pg-image img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.2); will-change: transform; }
-.pg-footer { display: flex; align-items: center; gap: 1.5rem; padding: 0 5vw; font-size: .7rem; letter-spacing: .3em; }
-.pg-progress { flex: 1; height: 1px; background: rgba(245,240,232,.25); overflow: hidden; }
-.pg-bar { height: 100%; background: var(--sand); transform-origin: left; transform: scaleX(0); }
+
+.pg-section {
+  position: relative;
+  background: var(--olive-dark);
+  color: var(--cream);
+}
+
+.pg-frame {
+  position: sticky;
+  top: 0;
+
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  gap: 2.2rem;
+
+  /*
+   * Prevent the horizontal gallery from
+   * creating accidental page width.
+   */
+  max-width: 100vw;
+}
+
+/* ---------- heading ---------- */
+
+.pg-heading {
+  width: 100%;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  padding: 0 5vw;
+
+  box-sizing: border-box;
+}
+
+.pg-eyebrow {
+  margin: 0 0 1rem;
+
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+
+  color: var(--sand);
+}
+
+.pg-heading h2 {
+  margin: 0;
+
+  font-family:
+    var(
+      --font-serif,
+      "Playfair Display",
+      Georgia,
+      serif
+    );
+
+  font-weight: 500;
+
+  font-size:
+    clamp(
+      2rem,
+      4.5vw,
+      3.8rem
+    );
+
+  line-height: 1.05;
+
+  color: var(--white);
+}
+
+.pg-heading em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- counter ---------- */
+
+.pg-count {
+  font-family:
+    var(
+      --font-serif,
+      "Playfair Display",
+      Georgia,
+      serif
+    );
+
+  display: flex;
+  align-items: baseline;
+
+  gap: 0.5rem;
+}
+
+.pg-count b {
+  font-weight: 400;
+
+  font-size:
+    clamp(
+      2rem,
+      4vw,
+      3.4rem
+    );
+
+  color: var(--sand);
+}
+
+.pg-count span {
+  opacity: 0.6;
+}
+
+/* ---------- horizontal track ---------- */
+
+.pg-track {
+  display: flex;
+
+  align-items: center;
+
+  gap: 2.5vw;
+
+  /*
+   * Keep the first card aligned with the
+   * original 5vw gallery padding.
+   */
+  padding-left: 5vw;
+  padding-right: 5vw;
+
+  width: max-content;
+
+  max-width: none;
+
+  will-change: transform;
+
+  transform:
+    translate3d(
+      0,
+      0,
+      0
+    );
+}
+
+/* ---------- gallery item ---------- */
+
+.pg-item {
+  flex: 0 0 auto;
+
+  width:
+    min(
+      46vw,
+      640px
+    );
+
+  will-change:
+    transform,
+    opacity;
+
+  transform-origin:
+    center center;
+
+  /*
+   * Keeps cards inside the horizontal
+   * gallery system.
+   */
+  box-sizing: border-box;
+}
+
+/* ---------- clickable image ---------- */
+
+.pg-photo-button {
+  display: block;
+
+  width: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: inherit;
+
+  cursor: zoom-in;
+
+  text-align: left;
+}
+
+/* ---------- image card ---------- */
+
+.pg-image {
+  position: relative;
+
+  width:
+    min(
+      46vw,
+      640px
+    );
+
+  /*
+   * UNIFIED STATIC CARD SIZE.
+   *
+   * Every image gets the same visual
+   * dimensions, regardless of uploaded ratio.
+   */
+  height:
+    min(
+      48vh,
+      440px
+    );
+
+  overflow: hidden;
+
+  border-radius: 18px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.04
+    );
+
+  box-sizing: border-box;
+}
+
+/* ---------- image ---------- */
+
+.pg-image img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  /*
+   * Unified card presentation.
+   * Prevents different uploads from
+   * changing the card dimensions.
+   */
+  object-fit: cover;
+
+  object-position: center;
+
+  transform:
+    scale(1.2);
+
+  will-change: transform;
+
+  transition:
+    transform
+    0.7s
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    );
+}
+
+/* ---------- hover ---------- */
+
+@media (hover: hover) and (pointer: fine) {
+  .pg-photo-button:hover
+    .pg-image img {
+    transform:
+      scale(1.25);
+  }
+}
+
+/* ---------- view photo ---------- */
+
+.pg-view {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    translateY(8px);
+
+  display: flex;
+  align-items: center;
+
+  gap: 0.65rem;
+
+  padding:
+    0.75rem
+    0.95rem;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.45
+    );
+
+  background:
+    rgba(
+      25,
+      34,
+      24,
+      0.72
+    );
+
+  color: var(--white);
+
+  backdrop-filter:
+    blur(8px);
+
+  -webkit-backdrop-filter:
+    blur(8px);
+
+  font-size: 0.65rem;
+
+  letter-spacing: 0.13em;
+
+  text-transform: uppercase;
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition:
+    opacity
+    0.3s
+    ease,
+    transform
+    0.3s
+    ease;
+}
+
+.pg-view-arrow {
+  font-size: 1rem;
+  line-height: 0.7;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pg-photo-button:hover
+    .pg-view {
+    opacity: 1;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      translateY(0);
+  }
+}
+
+/* ---------- card metadata ---------- */
+
+.pg-item-meta {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  padding:
+    0.7rem
+    0.1rem
+    0;
+
+  font-size: 0.6rem;
+
+  letter-spacing: 0.16em;
+
+  text-transform: uppercase;
+
+  opacity: 0.5;
+}
+
+.pg-item-meta span:first-child {
+  color: var(--sand);
+
+  opacity: 0.9;
+}
+
+/* ---------- footer ---------- */
+
+.pg-footer {
+  display: flex;
+
+  align-items: center;
+
+  gap: 1.5rem;
+
+  padding:
+    0 5vw;
+
+  font-size: 0.7rem;
+
+  letter-spacing: 0.3em;
+
+  box-sizing: border-box;
+}
+
+.pg-progress {
+  flex: 1;
+
+  height: 1px;
+
+  background:
+    rgba(
+      245,
+      240,
+      232,
+      0.25
+    );
+
+  overflow: hidden;
+}
+
+.pg-bar {
+  height: 100%;
+
+  background: var(--sand);
+
+  transform-origin: left;
+
+  transform:
+    scaleX(0);
+
+  will-change: transform;
+}
+
+/* =========================================================
+   PHOTO LIGHTBOX
+   ========================================================= */
+
+.pg-lightbox {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 99999;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: space-between;
+
+  padding:
+    2rem
+    3vw;
+
+  background:
+    rgba(
+      18,
+      27,
+      18,
+      0.97
+    );
+
+  color: var(--cream);
+
+  animation:
+    pg-lightbox-in
+    0.3s
+    ease
+    both;
+}
+
+@keyframes pg-lightbox-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- lightbox header ---------- */
+
+.pg-lightbox-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  position: relative;
+
+  z-index: 2;
+
+  font-size: 0.65rem;
+
+  letter-spacing: 0.2em;
+
+  text-transform: uppercase;
+}
+
+.pg-lightbox-close {
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.7rem;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: var(--cream);
+
+  font: inherit;
+
+  font-size: 0.65rem;
+
+  letter-spacing: 0.15em;
+
+  cursor: pointer;
+}
+
+.pg-lightbox-close span {
+  font-size: 1.5rem;
+
+  line-height: 0.7;
+}
+
+/* ---------- lightbox image ---------- */
+
+.pg-lightbox-image-wrap {
+  position: absolute;
+
+  inset:
+    5rem
+    4vw;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.pg-lightbox-image {
+  display: block;
+
+  max-width: 92vw;
+  max-height: 82vh;
+
+  width: auto;
+  height: auto;
+
+  object-fit: contain;
+
+  box-shadow:
+    0 25px 80px
+    rgba(
+      0,
+      0,
+      0,
+      0.35
+    );
+
+  animation:
+    pg-lightbox-image-in
+    0.4s
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    )
+    both;
+}
+
+@keyframes pg-lightbox-image-in {
+  from {
+    opacity: 0;
+
+    transform:
+      scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      scale(1);
+  }
+}
+
+/* ---------- lightbox footer ---------- */
+
+.pg-lightbox-footer {
+  position: relative;
+
+  z-index: 2;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  font-size: 0.55rem;
+
+  letter-spacing: 0.18em;
+
+  text-transform: uppercase;
+
+  opacity: 0.45;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
 @media (max-width: 768px) {
-  .pg-image { width: 78vw; height: 44vh; }
-  .sv-overlay { padding: 1.6rem 6vw; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .sv-chapter { transition: none; }
+  .pg-frame {
+    gap: 1.8rem;
+
+    min-height: 100svh;
+  }
+
+  .pg-heading {
+    padding:
+      0 6vw;
+  }
+
+  .pg-heading h2 {
+    font-size:
+      clamp(
+        2rem,
+        9vw,
+        3rem
+      );
+  }
+
+  .pg-count b {
+    font-size:
+      clamp(
+        1.8rem,
+        8vw,
+        2.8rem
+      );
+  }
+
+  .pg-track {
+    gap: 4vw;
+
+    padding:
+      0 6vw;
+  }
+
+  /*
+   * Still one unified static card size
+   * on mobile.
+   */
+  .pg-item {
+    width: 78vw;
+  }
+
+  .pg-image {
+    width: 78vw;
+
+    height: 44vh;
+
+    min-height: 300px;
+    max-height: 440px;
+
+    border-radius: 14px;
+  }
+
+  .pg-footer {
+    padding:
+      0 6vw;
+
+    font-size: 0.58rem;
+  }
+
+  /*
+   * Keep "View Photo" visible on touch
+   * because there is no hover state.
+   */
+  .pg-view {
+    left: auto;
+    top: auto;
+
+    right: 12px;
+    bottom: 12px;
+
+    transform: none;
+
+    opacity: 1;
+
+    padding:
+      0.6rem
+      0.75rem;
+
+    font-size: 0.55rem;
+  }
+
+  .pg-lightbox {
+    padding:
+      1.25rem;
+  }
+
+  .pg-lightbox-image-wrap {
+    inset:
+      5rem
+      1rem
+      4rem;
+  }
+
+  .pg-lightbox-image {
+    max-width: 94vw;
+    max-height: 78vh;
+  }
 }
 
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .pg-image img {
+    transition: none;
+  }
+
+  .pg-view {
+    transition: none;
+  }
+
+  .pg-lightbox,
+  .pg-lightbox-image {
+    animation: none;
+  }
+}

@@ -2,137 +2,434 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type ProjectGalleryProps = { images: string[] };
+type ProjectGalleryProps = {
+  images: string[];
+};
 
-export default function ProjectGallery({ images }: ProjectGalleryProps) {
+export default function ProjectGallery({
+  images,
+}: ProjectGalleryProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
+
   const [index, setIndex] = useState(0);
+  const [lightboxImage, setLightboxImage] =
+    useState<string | null>(null);
 
   useEffect(() => {
     const section = sectionRef.current;
     const track = trackRef.current;
     const bar = barRef.current;
+
     if (!section || !track || !bar) return;
 
     let target = 0;
     let current = 0;
     let maxX = 0;
-    let lastIdx = 0;
     let raf = 0;
+    let lastIndex = -1;
 
     const measure = () => {
-      maxX = Math.max(0, track.scrollWidth - window.innerWidth);
-      section.style.height = `${maxX + window.innerHeight}px`;
-      const rect = section.getBoundingClientRect();
-      target = maxX > 0 ? Math.max(0, Math.min(1, -rect.top / maxX)) : 0;
+      /*
+       * Calculate the amount of horizontal movement
+       * available inside the gallery.
+       */
+      maxX = Math.max(
+        0,
+        track.scrollWidth - window.innerWidth
+      );
+
+      /*
+       * Give the section enough vertical height
+       * for the horizontal gallery to complete.
+       */
+      section.style.height =
+        `${window.innerHeight + maxX}px`;
+
+      const rect =
+        section.getBoundingClientRect();
+
+      if (maxX <= 0) {
+        target = 0;
+        return;
+      }
+
+      target = Math.max(
+        0,
+        Math.min(
+          1,
+          -rect.top / maxX
+        )
+      );
+    };
+
+    const updateItems = () => {
+      const viewportCenter =
+        window.innerWidth / 2;
+
+      const items =
+        track.querySelectorAll<HTMLElement>(
+          ".pg-item"
+        );
+
+      let closestIndex = 0;
+      let closestDistance = Infinity;
+
+      items.forEach((item, i) => {
+        const rect =
+          item.getBoundingClientRect();
+
+        const itemCenter =
+          rect.left + rect.width / 2;
+
+        const distance =
+          Math.abs(
+            itemCenter - viewportCenter
+          );
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = i;
+        }
+
+        /*
+         * Subtle emphasis on the image closest
+         * to the center.
+         */
+        const normalizedDistance = Math.min(
+          distance / window.innerWidth,
+          1
+        );
+
+        const scale =
+          1 -
+          normalizedDistance * 0.055;
+
+        const opacity =
+          1 -
+          normalizedDistance * 0.25;
+
+        item.style.transform =
+          `scale(${scale})`;
+
+        item.style.opacity =
+          `${opacity}`;
+      });
+
+      if (
+        closestIndex !== lastIndex
+      ) {
+        lastIndex = closestIndex;
+        setIndex(closestIndex);
+      }
     };
 
     const tick = () => {
-      current += (target - current) * 0.09;
-      if (Math.abs(target - current) < 0.0003) current = target;
+      current +=
+        (target - current) * 0.09;
 
-      track.style.transform = `translate3d(${-current * maxX}px,0,0)`;
-      bar.style.transform = `scaleX(${current})`;
-
-      const vw = window.innerWidth;
-      let best = 0;
-      let bestDist = Infinity;
-
-      track.querySelectorAll<HTMLElement>(".pg-item").forEach((item, i) => {
-        const r = item.getBoundingClientRect();
-        const dist = (r.left + r.width / 2 - vw / 2) / vw;
-        const d = Math.min(Math.abs(dist), 0.8);
-
-        /* focus effect: centre photo is full size, neighbours recede */
-        item.style.transform = `scale(${1 - d * 0.14})`;
-        item.style.opacity = `${1 - d * 0.55}`;
-
-        /* parallax inside the frame */
-        const img = item.querySelector<HTMLImageElement>("img");
-        if (img) img.style.transform = `translate3d(${dist * -80}px,0,0) scale(1.2)`;
-
-        if (Math.abs(dist) < bestDist) {
-          bestDist = Math.abs(dist);
-          best = i;
-        }
-      });
-
-      if (best !== lastIdx) {
-        lastIdx = best;
-        setIndex(best);
+      if (
+        Math.abs(
+          target - current
+        ) < 0.0004
+      ) {
+        current = target;
       }
 
-      raf = current !== target ? requestAnimationFrame(tick) : 0;
+      /*
+       * Move only as far as the actual
+       * track width allows.
+       */
+      track.style.transform =
+        `translate3d(${
+          -current * maxX
+        }px, 0, 0)`;
+
+      bar.style.transform =
+        `scaleX(${current})`;
+
+      updateItems();
+
+      if (current !== target) {
+        raf =
+          requestAnimationFrame(
+            tick
+          );
+      } else {
+        raf = 0;
+      }
     };
 
     const kick = () => {
       measure();
-      if (!raf) raf = requestAnimationFrame(tick);
+
+      if (!raf) {
+        raf =
+          requestAnimationFrame(
+            tick
+          );
+      }
     };
 
-    const ro = new ResizeObserver(kick);
-    ro.observe(track);
+    const resizeObserver =
+      new ResizeObserver(kick);
 
-    window.addEventListener("scroll", kick, { passive: true });
-    window.addEventListener("resize", kick);
-    window.addEventListener("load", kick);
+    resizeObserver.observe(track);
+
+    window.addEventListener(
+      "scroll",
+      kick,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "resize",
+      kick
+    );
+
+    window.addEventListener(
+      "load",
+      kick
+    );
+
     kick();
 
     return () => {
-      ro.disconnect();
-      window.removeEventListener("scroll", kick);
-      window.removeEventListener("resize", kick);
-      window.removeEventListener("load", kick);
-      if (raf) cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
+
+      window.removeEventListener(
+        "scroll",
+        kick
+      );
+
+      window.removeEventListener(
+        "resize",
+        kick
+      );
+
+      window.removeEventListener(
+        "load",
+        kick
+      );
+
+      if (raf) {
+        cancelAnimationFrame(raf);
+      }
     };
   }, [images]);
 
-  if (!images.length) return null;
+  /*
+   * Prevent background page scrolling while
+   * the photo viewer is open.
+   */
+  useEffect(() => {
+    if (!lightboxImage) return;
 
-  const pad = (n: number) => String(n).padStart(2, "0");
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      "hidden";
+
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === "Escape") {
+        setLightboxImage(null);
+      }
+    };
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [lightboxImage]);
+
+  if (!images.length) {
+    return null;
+  }
+
+  const pad = (n: number) =>
+    String(n).padStart(2, "0");
 
   return (
-    <section ref={sectionRef} className="pg-section">
-      <div className="pg-frame">
-        <div className="pg-heading">
-          <div>
-            <p className="pg-eyebrow">VISUAL MOMENTS</p>
-            <h2>
-              A closer look
-              <br />
-              <em>at the space.</em>
-            </h2>
-          </div>
-          <div className="pg-count">
-            <b>{pad(index + 1)}</b>
-            <span>/ {pad(images.length)}</span>
-          </div>
-        </div>
+    <>
+      <section
+        ref={sectionRef}
+        className="pg-section"
+      >
+        <div className="pg-frame">
 
-        <div ref={trackRef} className="pg-track">
-          {images.map((image, i) => (
-            <div className="pg-item" key={`${image}-${i}`}>
-              <div className="pg-image">
-                <img
-                  src={image}
-                  alt={`Project interior ${i + 1}`}
-                  loading={i < 2 ? "eager" : "lazy"}
-                  decoding="async"
-                />
-              </div>
+          {/* Heading */}
+          <div className="pg-heading">
+            <div>
+              <p className="pg-eyebrow">
+                VISUAL MOMENTS
+              </p>
+
+              <h2>
+                A closer look
+                <br />
+                <em>at the space.</em>
+              </h2>
             </div>
-          ))}
-        </div>
 
-        <div className="pg-footer">
-          <span>SCROLL TO EXPLORE</span>
-          <div className="pg-progress">
-            <div ref={barRef} className="pg-bar" />
+            <div className="pg-count">
+              <b>
+                {pad(index + 1)}
+              </b>
+
+              <span>
+                / {pad(images.length)}
+              </span>
+            </div>
+          </div>
+
+          {/* Horizontal scroll gallery */}
+          <div
+            ref={trackRef}
+            className="pg-track"
+          >
+            {images.map(
+              (image, i) => (
+                <article
+                  className="pg-item"
+                  key={`${image}-${i}`}
+                >
+                  <button
+                    type="button"
+                    className="pg-photo-button"
+                    onClick={() =>
+                      setLightboxImage(
+                        image
+                      )
+                    }
+                    aria-label={`View project photo ${
+                      i + 1
+                    }`}
+                  >
+                    <div className="pg-image">
+
+                      <img
+                        src={image}
+                        alt={`Project interior ${
+                          i + 1
+                        }`}
+                        loading={
+                          i < 2
+                            ? "eager"
+                            : "lazy"
+                        }
+                        decoding="async"
+                      />
+
+                      <span className="pg-view">
+                        <span>
+                          View Photo
+                        </span>
+
+                        <span className="pg-view-arrow">
+                          ↗
+                        </span>
+                      </span>
+
+                    </div>
+                  </button>
+
+                  <div className="pg-item-meta">
+                    <span>
+                      {pad(i + 1)}
+                    </span>
+
+                    <span>
+                      PROJECT DETAIL
+                    </span>
+                  </div>
+                </article>
+              )
+            )}
+          </div>
+
+          {/* Footer / progress */}
+          <div className="pg-footer">
+            <span>
+              SCROLL TO EXPLORE
+            </span>
+
+            <div className="pg-progress">
+              <div
+                ref={barRef}
+                className="pg-bar"
+              />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Full photo viewer */}
+      {lightboxImage && (
+        <div
+          className="pg-lightbox"
+          role="dialog"
+          aria-modal="true"
+          onClick={() =>
+            setLightboxImage(null)
+          }
+        >
+          <div className="pg-lightbox-header">
+            <span>
+              TARA LIVING
+            </span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setLightboxImage(null)
+              }
+              className="pg-lightbox-close"
+              aria-label="Close photo"
+            >
+              CLOSE
+              <span>×</span>
+            </button>
+          </div>
+
+          <div
+            className="pg-lightbox-image-wrap"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <img
+              src={lightboxImage}
+              alt="Project interior enlarged"
+              className="pg-lightbox-image"
+            />
+          </div>
+
+          <div className="pg-lightbox-footer">
+            <span>
+              CLICK OUTSIDE TO CLOSE
+            </span>
+
+            <span>
+              ESC
+            </span>
           </div>
         </div>
-      </div>
-    </section>
+      )}
+    </>
   );
 }
