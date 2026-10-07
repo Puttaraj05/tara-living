@@ -65,7 +65,7 @@ const defaultServices = [
     title: "Commercial Interiors",
     description:
       "Purpose-built spaces that combine functionality, productivity, and a strong visual identity for modern businesses and brands.",
-    image: "/images/service-2.jpg",
+    image: "/images/service-4.jpg",
     services: [
       "Office Interiors",
       "Corporate Workspaces",
@@ -99,7 +99,7 @@ const defaultServices = [
     title: "Renovation & Turnkey",
     description:
       "End-to-end interior solutions managed from the first concept to final handover, ensuring a seamless and carefully executed transformation.",
-    image: "/images/service-4.jpg",
+    image: "/images/service-2.jpg",
     services: [
       "Interior Renovation",
       "Turnkey Interiors",
@@ -428,6 +428,23 @@ const [formData, setFormData] = useState({
       setIsSubmitting(false);
     }
   };
+
+    useEffect(() => {
+    const header = document.querySelector(".site-header");
+
+    if (!header) return;
+
+    const handleScroll = () => {
+      header.classList.toggle("scrolled", window.scrollY > 120);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
 
   useEffect(() => {
