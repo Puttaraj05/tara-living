@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Bodoni_Moda } from "next/font/google";
+import { GoogleTagManager } from '@next/third-parties/google';
 
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${bodoni.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <GoogleTagManager gtmId="GTM-TNP34GW6" />
         {children}
       </body>
     </html>
