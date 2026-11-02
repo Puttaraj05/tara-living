@@ -2860,47 +2860,57 @@ h1 em {
    MOBILE
 ========================================================= */
 
+/* =========================================================
+   PROCESS — MOBILE
+========================================================= */
+
 @media (max-width: 900px) {
 
   .process {
+    width: 100%;
     height: auto;
-
     overflow: visible;
   }
-
 
   .process-pin {
+    width: 100%;
     height: auto;
-
     min-height: 0;
-
     overflow: visible;
 
-    padding:
-      100px
-      24px
-      80px;
+    padding: 85px 22px 60px;
   }
 
+  /* HEADER */
 
   .process-heading {
     position: relative;
-
     top: auto;
+    left: auto;
 
-    margin-bottom: 70px;
+    width: 100%;
+
+    margin-bottom: 55px;
+
+    text-align: center;
   }
-
 
   .process-heading h2 {
-    font-size: 42px;
+    font-size: clamp(32px, 8vw, 42px);
+    line-height: 1.05;
   }
 
+  .process-heading-line {
+    margin-bottom: 15px;
+  }
+
+  /* BACKGROUND */
 
   .process-background-number {
     display: none;
   }
 
+  /* VIEWPORT */
 
   .process-viewport {
     position: relative;
@@ -2908,78 +2918,105 @@ h1 em {
     top: auto;
     bottom: auto;
 
+    width: 100%;
     height: auto;
 
     overflow: visible;
   }
 
+  /* VERTICAL TRACK */
 
   .process-track {
-    width: 100%;
-
-    height: auto;
+    position: relative;
 
     display: flex;
-
     flex-direction: column;
 
-    gap: 90px;
+    width: 100%;
+    height: auto;
+
+    gap: 48px;
 
     transform: none !important;
   }
 
+  /* CARDS */
 
   .process-card {
-    width: 100%;
+    position: relative;
 
-    height: 400px;
+    width: 100%;
+    height: auto;
+
+    min-height: 0;
 
     flex: none;
+
+    padding-top: 76px;
+    padding-bottom: 5px;
   }
 
+  /* HIDE DESKTOP CURVE */
 
   .process-line {
     display: none;
   }
 
+  /* NUMBER */
 
   .process-card-number {
     position: absolute;
 
     left: 0 !important;
     top: 0 !important;
+
+    width: 54px;
+    height: 54px;
+
+    font-size: 12px;
   }
 
+  /* CONTENT */
 
   .process-card-content {
-    position: absolute;
+    position: relative !important;
 
-    left: 0 !important;
-    top: 100px !important;
+    left: auto !important;
+    top: auto !important;
 
     width: 100%;
-
-    transform: none !important;
   }
 
+  .process-label {
+    margin-bottom: 12px;
+    font-size: 9px;
+  }
+
+  /* TITLE */
 
   .process-card h3 {
-    font-size: 42px;
+    margin-bottom: 12px;
+
+    font-size: clamp(30px, 8vw, 38px);
+
+    line-height: 1.05;
   }
 
+  /* DESCRIPTION */
 
   .process-card p {
-    width: min(300px, 90%);
+    width: min(100%, 340px);
 
     font-size: 13px;
+    line-height: 1.75;
   }
 
+  /* PROGRESS */
 
   .process-progress {
     display: none;
   }
 }
-
 /* =========================================================
    WHY TARA LIVING — BENTO SECTION
 ========================================================= */
@@ -16506,5 +16543,649 @@ h1 em {
   .pg-lightbox,
   .pg-lightbox-image {
     animation: none;
+  }
+}
+
+/* =========================================
+   TARA LIVING — FULL SCREEN THANK YOU PAGE
+========================================= */
+
+.thankyou-page {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  overflow: hidden;
+  background: #f6f4ed;
+  color: #343b2b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 30px 22px;
+  isolation: isolate;
+}
+
+.thankyou-header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.thankyou-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thankyou-logo-image {
+  width: 155px;
+  height: auto;
+  object-fit: contain;
+}
+
+.thankyou-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 760px;
+  margin: auto;
+  padding: 35px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: thankyouReveal 0.9s ease both;
+}
+
+.thankyou-success {
+  margin-bottom: 27px;
+}
+
+.thankyou-success-circle {
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(91, 104, 70, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(91, 104, 70, 0.07);
+}
+
+.thankyou-success-circle svg {
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: #66734f;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.thankyou-eyebrow {
+  font-size: 10px;
+  letter-spacing: 3px;
+  font-weight: 500;
+  color: #7c8469;
+  margin-bottom: 23px;
+}
+
+.thankyou-heading {
+  font-family: var(--font-bodoni), "Bodoni Moda", serif;
+  font-size: clamp(52px, 7vw, 88px);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -2px;
+  color: #343b2b;
+}
+
+.thankyou-heading span {
+  color: #899174;
+  font-style: italic;
+}
+
+.thankyou-divider {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 30px 0 24px;
+  color: #899174;
+  font-size: 13px;
+}
+
+.thankyou-divider span:not(:nth-child(2)) {
+  width: 48px;
+  height: 1px;
+  background: #c7cbb9;
+}
+
+.thankyou-description {
+  max-width: 520px;
+  font-size: 14px;
+  line-height: 1.9;
+  color: #77796c;
+  font-weight: 300;
+}
+
+.thankyou-confirmation {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 25px;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  color: #68734f;
+}
+
+.thankyou-confirmation-check {
+  width: 19px;
+  height: 19px;
+  border: 1px solid #aab194;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.thankyou-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-top: 32px;
+}
+
+.thankyou-button {
+  min-width: 190px;
+  padding: 16px 22px;
+  background: #414a34;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.thankyou-button:hover {
+  background: #697451;
+  transform: translateY(-3px);
+}
+
+.thankyou-button-arrow {
+  font-size: 18px;
+  transition: transform 0.3s ease;
+}
+
+.thankyou-button:hover .thankyou-button-arrow {
+  transform: translateX(4px);
+}
+
+.thankyou-project-link {
+  font-size: 11px;
+  color: #77796c;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+.thankyou-project-link:hover {
+  color: #414a34;
+}
+
+.thankyou-project-link span {
+  margin-left: 4px;
+}
+
+.thankyou-footer {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-bodoni), "Bodoni Moda", serif;
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: #929782;
+  text-align: center;
+}
+
+.thankyou-decoration {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(126, 137, 102, 0.13);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.thankyou-decoration-one {
+  width: 520px;
+  height: 520px;
+  top: -260px;
+  right: -180px;
+}
+
+.thankyou-decoration-two {
+  width: 650px;
+  height: 650px;
+  bottom: -390px;
+  left: -260px;
+}
+
+@keyframes thankyouReveal {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+  .thankyou-page {
+    min-height: 100svh;
+    padding: 20px 22px 22px;
+  }
+
+  .thankyou-logo-image {
+    width: 135px;
+  }
+
+  .thankyou-content {
+    padding: 25px 0;
+  }
+
+  .thankyou-success {
+    margin-bottom: 24px;
+  }
+
+  .thankyou-success-circle {
+    width: 56px;
+    height: 56px;
+  }
+
+  .thankyou-eyebrow {
+    font-size: 8px;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  .thankyou-heading {
+    font-size: clamp(43px, 11vw, 60px);
+    letter-spacing: -1.5px;
+  }
+
+  .thankyou-divider {
+    margin: 25px 0 20px;
+  }
+
+  .thankyou-description {
+    font-size: 12px;
+    line-height: 1.85;
+    max-width: 340px;
+  }
+
+  .thankyou-confirmation {
+    font-size: 10px;
+    margin-top: 22px;
+  }
+
+  .thankyou-actions {
+    margin-top: 28px;
+  }
+
+  .thankyou-button {
+    min-width: 185px;
+  }
+
+  .thankyou-footer {
+    font-size: 13px;
+  }
+
+  .thankyou-decoration-one {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    right: -150px;
+  }
+
+  .thankyou-decoration-two {
+    width: 350px;
+    height: 350px;
+    bottom: -220px;
+    left: -180px;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 601px) {
+  .thankyou-content {
+    padding: 12px 0;
+  }
+
+  .thankyou-success {
+    margin-bottom: 14px;
+  }
+
+  .thankyou-divider {
+    margin: 18px 0 14px;
+  }
+
+  .thankyou-actions {
+    margin-top: 20px;
+  }
+}
+
+/* =========================================================
+   TARA LIVING — FINAL CONTACT FORM REFINEMENT
+========================================================= */
+
+.final-cta-form-card {
+  width: 100%;
+  max-width: 620px;
+  padding: 38px 36px 30px;
+  background: rgba(250, 249, 246, 0.97);
+  border: 1px solid rgba(120, 115, 98, 0.16);
+  border-radius: 11px;
+  box-shadow: 0 18px 48px rgba(57, 52, 42, 0.09);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.final-cta-form-card * {
+  box-sizing: border-box;
+}
+
+.final-inquiry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+}
+
+/* HEADING */
+
+.final-form-heading {
+  margin-bottom: 3px;
+}
+
+.final-form-heading > span {
+  display: block;
+  margin-bottom: 12px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.19em;
+  color: #777b5b;
+}
+
+.final-form-heading h3 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  color: #393a31;
+}
+
+.final-form-heading p {
+  margin: 9px 0 0;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #858178;
+}
+
+/* FIELD ROWS */
+
+.final-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.final-form-field {
+  min-width: 0;
+  width: 100%;
+}
+
+/* LABELS */
+
+.final-form-field label {
+  display: block;
+  margin-bottom: 9px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  color: #555449;
+}
+
+.final-form-field label sup {
+  color: #a26048;
+  font-size: 10px;
+}
+
+/* INPUTS */
+
+.final-input {
+  width: 100%;
+  height: 47px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #dedbd2;
+  border-radius: 6px;
+  background: #fffefa;
+  transition: border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.final-input:hover {
+  border-color: #b8b5a7;
+}
+
+.final-input:focus-within {
+  border-color: #777b5b;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(119, 123, 91, 0.09);
+}
+
+.final-input input,
+.final-input select {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 13px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  color: #45443c;
+}
+
+.final-input input::placeholder {
+  color: #aaa69d;
+  opacity: 1;
+}
+
+/* DROPDOWN */
+
+.final-select {
+  position: relative;
+}
+
+.final-select select {
+  padding-right: 35px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.final-select .select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 17px;
+  color: #777b5b;
+  pointer-events: none;
+}
+
+.final-select select option {
+  color: #44433d;
+  background: #fff;
+}
+
+/* SUBMIT BUTTON */
+
+.final-submit-button {
+  width: 100%;
+  min-height: 49px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 19px;
+  margin-top: 2px;
+  border: 1px solid #39402f;
+  border-radius: 5px;
+  background: #39402f;
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.3s ease,
+    transform 0.3s ease;
+}
+
+.final-submit-button:hover:not(:disabled) {
+  background: #2f3527;
+  transform: translateY(-2px);
+}
+
+.final-submit-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.final-submit-arrow {
+  font-size: 19px;
+  transition: transform 0.3s ease;
+}
+
+.final-submit-button:hover:not(:disabled) .final-submit-arrow {
+  transform: translateX(4px);
+}
+
+/* TRUST ROW */
+
+.final-trust-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #dfdcd5;
+}
+
+.final-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.final-trust-item span {
+  font-size: 14px;
+  color: #777b5b;
+}
+
+.final-trust-item p {
+  margin: 0;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 10px;
+  color: #77746d;
+}
+
+.final-trust-divider {
+  width: 1px;
+  height: 16px;
+  background: #d5d1c9;
+}
+
+/* CORRECT FORM ANIMATION DELAYS
+   JSX children: heading, row 1, row 2, button, trust row
+*/
+
+.final-inquiry-form > .final-form-row:nth-child(2) {
+  transition-delay: 0.45s;
+}
+
+.final-inquiry-form > .final-form-row:nth-child(3) {
+  transition-delay: 0.55s;
+}
+
+/* TABLET */
+
+@media (max-width: 900px) {
+  .final-cta-form-card {
+    max-width: 100%;
+    padding: 32px 28px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .final-cta-form-card {
+    padding: 26px 19px 23px;
+  }
+
+  .final-inquiry-form {
+    gap: 19px;
+  }
+
+  .final-form-row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .final-form-heading h3 {
+    font-size: 24px;
+  }
+
+  .final-input {
+    height: 48px;
+  }
+
+  .final-input input,
+  .final-input select {
+    font-size: 13px;
+  }
+
+  .final-submit-button {
+    min-height: 49px;
+  }
+
+  .final-trust-row {
+    gap: 12px;
+  }
+
+  .final-trust-item p {
+    font-size: 9px;
   }
 }

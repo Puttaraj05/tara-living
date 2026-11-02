@@ -41,65 +41,54 @@ async def create_contact(
         name=contact.name,
         email=contact.email,
         phone=contact.phone,
-        city=contact.city,
-        property_type=contact.property_type,
+        city="",
+        property_type="",
         project_type=contact.project_type,
-        budget=contact.budget,
-        message=contact.message,
+        budget="",
+        message="",
     )
 
     db.add(new_contact)
     db.commit()
     db.refresh(new_contact)
 
-    # =====================================================
-    # SEND EMAIL NOTIFICATIONS
-    # =====================================================
-
-    # -----------------------------------------------------
-    # Email to Tara Living
-    # -----------------------------------------------------
-
+    # Email notification to Tara Living
     try:
         await send_contact_notification(
             name=contact.name,
             email=contact.email,
             phone=contact.phone,
-            city=contact.city,
-            property_type=contact.property_type,
+            city="",
+            property_type="",
             project_type=contact.project_type,
-            budget=contact.budget,
-            message=contact.message,
+            budget="",
+            message="",
         )
 
         logger.info("Owner notification sent")
 
-    except Exception as e:
+    except Exception:
         logger.exception("Owner email failed")
 
-    # -----------------------------------------------------
     # Confirmation email to client
-    # -----------------------------------------------------
-
     try:
         await send_client_confirmation(
             name=contact.name,
             email=contact.email,
-            property_type=contact.property_type,
+            property_type="",
             project_type=contact.project_type,
-            city=contact.city,
+            city="",
         )
 
         logger.info("Client confirmation sent")
 
-    except Exception as e:
+    except Exception:
         logger.exception("Client confirmation failed")
 
     return {
         "message": "Inquiry submitted successfully",
         "id": new_contact.id,
     }
-
 
 # =========================================================
 # GET ALL CLIENT INQUIRIES

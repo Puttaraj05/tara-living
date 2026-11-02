@@ -1,14 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 type Props = {
   src: string;
   alt: string;
-  /* how far the photo travels inside its frame, as % of the frame height.
-     12 = subtle, 28 = dramatic (hero) */
   strength?: number;
-  /* frame scales up and loses rounded corners while scrolling in */
   grow?: boolean;
   className?: string;
 };
@@ -34,19 +32,28 @@ export default function ParallaxImg({
       const r = wrap.getBoundingClientRect();
       const vh = window.innerHeight;
 
-      /* -1 (frame has left the top) … +1 (frame about to enter at the bottom) */
       const t = Math.max(
         -1,
-        Math.min(1, (r.top + r.height / 2 - vh / 2) / (vh / 2 + r.height / 2))
+        Math.min(
+          1,
+          (r.top + r.height / 2 - vh / 2) /
+            (vh / 2 + r.height / 2)
+        )
       );
+
       const overhang = (r.height * strength) / 100;
       inner.style.transform = `translate3d(0, ${-t * overhang}px, 0)`;
 
       if (grow) {
-        const p = Math.max(0, Math.min(1, (vh - r.top) / (vh * 0.9)));
+        const p = Math.max(
+          0,
+          Math.min(1, (vh - r.top) / (vh * 0.9))
+        );
+
         wrap.style.transform = `scale(${0.84 + 0.16 * p})`;
         wrap.style.borderRadius = `${(1 - p) * 32}px`;
       }
+
       raf = 0;
     };
 
@@ -70,9 +77,18 @@ export default function ParallaxImg({
       <div
         ref={innerRef}
         className="pp-pimg-in"
-        style={{ top: `-${strength}%`, height: `${100 + strength * 2}%` }}
+        style={{
+          top: `-${strength}%`,
+          height: `${100 + strength * 2}%`,
+        }}
       >
-        <img src={src} alt={alt} loading="lazy" />
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          style={{ objectFit: "cover" }}
+        />
       </div>
     </div>
   );

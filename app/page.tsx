@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getMediaUrl } from "../lib/media";
-import { useEffect , useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FaInstagram,
   FaFacebookF,
@@ -11,6 +12,7 @@ import {
 } from "react-icons/fa";
 import WelcomeIntro from "./components/WelcomeIntro";
 import ProcessSection from "@/app/components/ProcessSection";
+import PathSectionScroll from "./components/PathSectionScroll";
 
 const founders = [
   {
@@ -170,6 +172,8 @@ type ApiTestimonial = {
 };
 
 export default function Home() {
+
+  const router = useRouter();
 
   const [services, setServices] =
     useState(defaultServices);
@@ -372,62 +376,58 @@ useEffect(() => {
 
 
 const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    city: "",
-    property_type: "",
-    project_type: "",
-    budget: "",
-    message: "",
-  });
+  name: "",
+  email: "",
+  phone: "",
+  project_type: "",
+});
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState("");
+   const [isSubmitting, setIsSubmitting] = useState(false);
+const [submitMessage, setSubmitMessage] = useState("");
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+const handleSubmit = async (
+  event: React.FormEvent<HTMLFormElement>
+) => {
+  event.preventDefault();
 
-    setIsSubmitting(true);
-    setSubmitMessage("");
+  setIsSubmitting(true);
+  setSubmitMessage("");
 
-    try {
-      const response = await fetch(`${API_URL}/api/contact/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+  try {
+    const response = await fetch(`${API_URL}/api/contact/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
 
-      const data = await response.json();
+    const responseText = await response.text();
 
-      if (!response.ok) {
-        throw new Error(data.detail || "Something went wrong");
-      }
+console.log("Contact API status:", response.status);
+console.log("Contact API response:", responseText);
 
-      setSubmitMessage("Your inquiry has been submitted successfully.");
+const data = JSON.parse(responseText);
 
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        city: "",
-        property_type: "",
-        project_type: "",
-        budget: "",
-        message: "",
-      });
-    } catch (error) {
-      setSubmitMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to submit your inquiry."
+    if (!response.ok) {
+      throw new Error(
+        data.detail || "Something went wrong"
       );
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+
+    // Redirect after successful submission
+    router.push("/thank-you");
+
+  } catch (error) {
+    setSubmitMessage(
+      error instanceof Error
+        ? error.message
+        : "Unable to submit your inquiry."
+    );
+
+    setIsSubmitting(false);
+  }
+};
 
     useEffect(() => {
     const header = document.querySelector(".site-header");
@@ -486,13 +486,14 @@ const getProjectImage = (
 
   return (
     <>
+    <PathSectionScroll />
     <WelcomeIntro/>
     <main className="site-main">
       {/* NAVIGATION */}
       {/* NAVIGATION */}
           <header className="site-header">
             <div className="nav-inner">
-              <a href="#home" className="brand">
+              <a href="/" className="brand">
                 <Image
                   src="/images/logo1.png"
                   alt="Tara Living Logo"
@@ -516,16 +517,16 @@ const getProjectImage = (
           
 
           <nav className="desktop-nav">
-            <a href="#home">Home</a>
-            <a href="#about">About</a>
-            <a href="#services">Services</a>
-            <a href="#projects">Projects</a>
-            <a href="#process">Process</a>
-            <a href="#journal">Journal</a>
-            <a href="#contact">Contact</a>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/services">Services</a>
+            <a href="/projects">Projects</a>
+            <a href="/process">Process</a>
+            <a href="/journal">Journal</a>
+            <a href="/contact">Contact</a>
           </nav>
 
-          <a href="#contact" className="nav-cta">
+          <a href="/contact" className="nav-cta">
             Book a Consultation
           </a>
         </div>
@@ -562,12 +563,12 @@ const getProjectImage = (
           </p>
 
           <div className="hero-actions hero-reveal delay-3">
-            <a href="#projects" className="button button-light">
+            <a href="/projects" className="button button-light">
               Explore Our Work
               <span>↗</span>
             </a>
 
-            <a href="#about" className="text-link light-link">
+            <a href="/about" className="text-link light-link">
               Discover Tara Living
               <span>↓</span>
             </a>
@@ -656,7 +657,7 @@ const getProjectImage = (
 
         {/* SERVICES CTA */}
         <div className="services-cta">
-          <a href="#contact">
+          <a href="/contact">
             <span>Start Your Project</span>
 
             <span className="services-cta-arrow">
@@ -830,7 +831,9 @@ const getProjectImage = (
 </section>
 
       {/* PROCESS */}
-<ProcessSection processSteps={processSteps} />
+
+  <ProcessSection processSteps={processSteps} />
+
 
       {/* WHY TARA LIVING */}
 <section className="why-us-bento section">
@@ -939,7 +942,7 @@ const getProjectImage = (
             entire journey together.
           </p>
 
-          <a href="#contact" className="why-bento-link">
+          <a href="/contact" className="why-bento-link">
             DISCOVER OUR PROCESS
             <span>↗</span>
           </a>
@@ -1233,480 +1236,166 @@ const getProjectImage = (
 
 
 
-    {/* =====================================================
-        RIGHT FORM
-    ===================================================== */}
+    {/* RIGHT FORM */}
+<div className="final-cta-form-card">
 
-    <div className="final-cta-form-card">
+  <form
+    className="final-inquiry-form"
+    onSubmit={handleSubmit}
+  >
 
-      <form
-        className="final-inquiry-form"
-        onSubmit={handleSubmit}
-      >
+    <div className="final-form-heading">
+      <span>LET'S GET STARTED</span>
+      <h3>Tell Us About Your Project</h3>
+      <p>Share a few details and our team will get in touch with you.</p>
+    </div>
 
-        {/* =================================================
-            ROW 1
-        ================================================= */}
+    {/* ROW 1 */}
+    <div className="final-form-row">
 
-        <div className="final-form-row">
+      {/* NAME */}
+      <div className="final-form-field">
+        <label htmlFor="name">
+          FULL NAME <sup>*</sup>
+        </label>
 
-          {/* NAME */}
-          <div className="final-form-field">
-
-            <label htmlFor="name">
-              FULL NAME <sup>*</sup>
-            </label>
-
-            <div className="final-input">
-
-              <span className="final-input-icon">
-                ♙
-              </span>
-
-              <input
-                id="name"
-                type="text"
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={(event) =>
-                  setFormData({
-                    ...formData,
-                    name: event.target.value,
-                  })
-                }
-                required
-              />
-
-            </div>
-
-          </div>
-
-
-          {/* EMAIL */}
-          <div className="final-form-field">
-
-            <label htmlFor="email">
-              EMAIL <sup>*</sup>
-            </label>
-
-            <div className="final-input">
-
-              <span className="final-input-icon">
-                ✉
-              </span>
-
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={(event) =>
-                  setFormData({
-                    ...formData,
-                    email: event.target.value,
-                  })
-                }
-                required
-              />
-
-            </div>
-
-          </div>
-
+        <div className="final-input">
+          <input
+            id="name"
+            type="text"
+            placeholder="Enter your full name"
+            value={formData.name}
+            onChange={(e) =>
+              setFormData({ ...formData, name: e.target.value })
+            }
+            required
+          />
         </div>
+      </div>
 
+      {/* PHONE */}
+      <div className="final-form-field">
+        <label htmlFor="phone">
+          PHONE NUMBER <sup>*</sup>
+        </label>
 
-
-        {/* =================================================
-            ROW 2
-        ================================================= */}
-
-        <div className="final-form-row">
-
-          {/* PHONE */}
-          <div className="final-form-field">
-
-            <label htmlFor="phone">
-              PHONE <sup>*</sup>
-            </label>
-
-            <div className="final-input">
-
-              <span className="final-input-icon phone-icon">
-                ⌕
-              </span>
-
-              <input
-                id="phone"
-                type="tel"
-                placeholder="+91 98765 43210"
-                value={formData.phone}
-                onChange={(event) =>
-                  setFormData({
-                    ...formData,
-                    phone: event.target.value,
-                  })
-                }
-                required
-              />
-
-            </div>
-
-          </div>
-
-
-          {/* CITY */}
-          <div className="final-form-field">
-
-            <label htmlFor="city">
-              CITY <sup>*</sup>
-            </label>
-
-            <div className="final-input">
-
-              <span className="final-input-icon">
-                ⌖
-              </span>
-
-              <input
-                id="city"
-                type="text"
-                placeholder="Your city"
-                value={formData.city}
-                onChange={(event) =>
-                  setFormData({
-                    ...formData,
-                    city: event.target.value,
-                  })
-                }
-                required
-              />
-
-            </div>
-
-          </div>
-
+        <div className="final-input">
+          <input
+            id="phone"
+            type="tel"
+            placeholder="+91 98765 43210"
+            value={formData.phone}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+            required
+          />
         </div>
-
-
-
-        {/* =================================================
-            ROW 3
-        ================================================= */}
-
-        <div className="final-form-row">
-
-          {/* PROPERTY */}
-          <div className="final-form-field">
-
-            <label htmlFor="property_type">
-              PROPERTY TYPE <sup>*</sup>
-            </label>
-
-            <div className="final-input final-select">
-
-              <span className="final-input-icon">
-                ⌂
-              </span>
-
-              <select
-                id="property_type"
-                value={formData.property_type}
-                onChange={(event) =>
-                  setFormData({
-                    ...formData,
-                    property_type: event.target.value,
-                  })
-                }
-                required
-              >
-
-                <option value="">
-                  Select property type
-                </option>
-
-                <option value="Apartment">
-                  Apartment
-                </option>
-
-                <option value="Villa">
-                  Villa
-                </option>
-
-                <option value="Independent House">
-                  Independent House
-                </option>
-
-                <option value="Office">
-                  Office
-                </option>
-
-                <option value="Retail / Shop">
-                  Retail / Shop
-                </option>
-
-                <option value="Other">
-                  Other
-                </option>
-
-              </select>
-
-              <span className="select-arrow">
-                ⌄
-              </span>
-
-            </div>
-
-          </div>
-
-
-          {/* PROJECT */}
-          <div className="final-form-field">
-
-            <label htmlFor="project_type">
-              PROJECT TYPE <sup>*</sup>
-            </label>
-
-            <div className="final-input final-select">
-
-              <span className="final-input-icon">
-                ▦
-              </span>
-
-              <select
-                id="project_type"
-                value={formData.project_type}
-                onChange={(event) =>
-                  setFormData({
-                    ...formData,
-                    project_type: event.target.value,
-                  })
-                }
-                required
-              >
-
-                <option value="">
-                  Select project type
-                </option>
-
-                <option value="Full Home Interior">
-                  Full Home Interior
-                </option>
-
-                <option value="Living Room Interior">
-                  Living Room Interior
-                </option>
-
-                <option value="Bedroom Interior">
-                  Bedroom Interior
-                </option>
-
-                <option value="Modular Kitchen">
-                  Modular Kitchen
-                </option>
-
-                <option value="Commercial Interior">
-                  Commercial Interior
-                </option>
-
-                <option value="Renovation">
-                  Renovation
-                </option>
-
-                <option value="Custom Furniture">
-                  Custom Furniture
-                </option>
-
-                <option value="Other">
-                  Other
-                </option>
-
-              </select>
-
-              <span className="select-arrow">
-                ⌄
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-
-        {/* =================================================
-            BUDGET
-        ================================================= */}
-
-        <div className="final-form-field">
-
-          <label htmlFor="budget">
-            BUDGET <sup>*</sup>
-          </label>
-
-          <div className="final-input final-select">
-
-            <span className="final-input-icon budget-icon">
-              ₹
-            </span>
-
-            <select
-              id="budget"
-              value={formData.budget}
-              onChange={(event) =>
-                setFormData({
-                  ...formData,
-                  budget: event.target.value,
-                })
-              }
-              required
-            >
-
-              <option value="">
-                Select your budget
-              </option>
-
-              <option value="Below ₹10L">
-                Below ₹10L
-              </option>
-
-              <option value="₹10L - ₹15L">
-                ₹10L - ₹15L
-              </option>
-
-              <option value="₹15L - ₹25L">
-                ₹15L - ₹25L
-              </option>
-
-              <option value="₹25L - ₹40L">
-                ₹25L - ₹40L
-              </option>
-
-              <option value="₹40L+">
-                ₹40L+
-              </option>
-
-            </select>
-
-            <span className="select-arrow">
-              ⌄
-            </span>
-
-          </div>
-
-        </div>
-
-
-
-        {/* =================================================
-            MESSAGE
-        ================================================= */}
-
-        <div className="final-form-field">
-
-          <label htmlFor="message">
-            TELL US ABOUT YOUR PROJECT <sup>*</sup>
-          </label>
-
-          <div className="final-textarea">
-
-            <span className="textarea-icon">
-              ▢
-            </span>
-
-            <textarea
-              id="message"
-              rows={3}
-              placeholder="Tell us about your requirements, preferred style, timelines, or any specific details..."
-              value={formData.message}
-              onChange={(event) =>
-                setFormData({
-                  ...formData,
-                  message: event.target.value,
-                })
-              }
-              required
-            />
-
-          </div>
-
-        </div>
-
-
-
-        {/* =================================================
-            SUBMIT BUTTON
-        ================================================= */}
-
-        <button
-          type="submit"
-          className="final-submit-button"
-          disabled={isSubmitting}
-        >
-
-          <span>
-            {isSubmitting
-              ? "Submitting..."
-              : "Submit Inquiry"}
-          </span>
-
-          <span className="final-submit-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        {/* MESSAGE */}
-        {submitMessage && (
-          <p className="final-submit-message">
-            {submitMessage}
-          </p>
-        )}
-
-
-
-        {/* =================================================
-            TRUST ROW
-        ================================================= */}
-
-        <div className="final-trust-row">
-
-          <div className="final-trust-item">
-            <span>♧</span>
-            <p>Free Consultation</p>
-          </div>
-
-          <div className="final-trust-divider" />
-
-          <div className="final-trust-item">
-            <span>◷</span>
-            <p>Quick Response</p>
-          </div>
-
-          <div className="final-trust-divider" />
-
-          <div className="final-trust-item">
-            <span>♡</span>
-            <p>Your Vision, Our Priority</p>
-          </div>
-
-        </div>
-
-      </form>
+      </div>
 
     </div>
 
-  </div>
+    {/* ROW 2 */}
+    <div className="final-form-row">
 
-</section>
+      {/* EMAIL */}
+      <div className="final-form-field">
+        <label htmlFor="email">
+          EMAIL ADDRESS <sup>*</sup>
+        </label>
+
+        <div className="final-input">
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+            required
+          />
+        </div>
+      </div>
+
+      {/* PROJECT TYPE */}
+      <div className="final-form-field">
+        <label htmlFor="project_type">
+          PROJECT TYPE <sup>*</sup>
+        </label>
+
+        <div className="final-input final-select">
+          <select
+            id="project_type"
+            value={formData.project_type}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                project_type: e.target.value,
+              })
+            }
+            required
+          >
+            <option value="">Select project type</option>
+            <option value="Full Home Interior">Full Home Interior</option>
+            <option value="Living Room Interior">Living Room Interior</option>
+            <option value="Bedroom Interior">Bedroom Interior</option>
+            <option value="Modular Kitchen">Modular Kitchen</option>
+            <option value="Commercial Interior">Commercial Interior</option>
+            <option value="Renovation">Renovation</option>
+            <option value="Custom Furniture">Custom Furniture</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <span className="select-arrow">⌄</span>
+        </div>
+      </div>
+
+    </div>
+
+    {/* SUBMIT BUTTON */}
+    <button
+      type="submit"
+      className="final-submit-button"
+      disabled={isSubmitting}
+    >
+      <span>
+        {isSubmitting ? "Submitting..." : "Submit Inquiry"}
+      </span>
+
+      <span className="final-submit-arrow">→</span>
+    </button>
+
+    {/* TRUST ROW */}
+    <div className="final-trust-row">
+
+      <div className="final-trust-item">
+        <span>♧</span>
+        <p>Free Consultation</p>
+      </div>
+
+      <div className="final-trust-divider" />
+
+      <div className="final-trust-item">
+        <span>◷</span>
+        <p>Quick Response</p>
+      </div>
+
+    </div>
+
+ </form>
+
+</div> {/* final-cta-form-card */}
+
+</div> {/* final-cta-container */}
+
+</section> {/* final-cta */}
 
       {/* FOOTER */}
       <footer className="footer">
         <div className="footer-main">
           <div className="footer-brand">
-            <a href="#home" className="brand footer-logo">
+            <a href="/" className="brand footer-logo">
               <span className="brand-mark">
   <Image
     src="/images/logo1.png"
@@ -1763,21 +1452,21 @@ const getProjectImage = (
           <div className="footer-column">
             <h4>Quick Links</h4>
 
-            <a href="#about">About</a>
-            <a href="#services">Services</a>
-            <a href="#projects">Projects</a>
-            <a href="#process">Process</a>
-            <a href="#journal">Journal</a>
-            <a href="#contact">Contact</a>
+            <a href="/about">About</a>
+            <a href="/services">Services</a>
+            <a href="/projects">Projects</a>
+            <a href="/process">Process</a>
+            <a href="/journal">Journal</a>
+            <a href="/contact">Contact</a>
           </div>
 
           <div className="footer-column">
             <h4>Services</h4>
 
-            <a href="#services">Residential Interiors</a>
-            <a href="#services">Commercial Interiors</a>
-            <a href="#services">Design & Styling</a>
-            <a href="#services">Renovation & Turnkey</a>
+            <a href="/services">Residential Interiors</a>
+            <a href="/services">Commercial Interiors</a>
+            <a href="/services">Design & Styling</a>
+            <a href="/services">Renovation & Turnkey</a>
           </div>
 
           <div className="footer-column contact-column">

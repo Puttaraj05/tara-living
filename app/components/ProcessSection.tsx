@@ -27,6 +27,48 @@ export default function ProcessSection({
     if (!section) return;
 
     const ctx = gsap.context(() => {
+            // MOBILE ANIMATION
+      // Use vertical reveal animations instead of horizontal scrolling.
+
+      if (window.matchMedia("(max-width: 900px)").matches) {
+        const cards = Array.from(
+          section.querySelectorAll<HTMLElement>(".process-card")
+        );
+
+        cards.forEach((card) => {
+          const number = card.querySelector(".process-card-number");
+          const content = card.querySelector(".process-card-content");
+
+          if (!number || !content) return;
+
+          gsap.fromTo(
+            [number, content],
+            {
+              autoAlpha: 0,
+              y: 28,
+            },
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.5,
+              stagger: 0.08,
+              ease: "power3.out",
+
+              scrollTrigger: {
+                trigger: card,
+                start: "top 95%",
+                toggleActions: "play none none none",
+                once: true,
+              },
+            }
+          );
+        });
+
+        ScrollTrigger.refresh();
+
+        return;
+      }
+
       const track = section.querySelector(
         ".process-track"
       ) as HTMLElement;

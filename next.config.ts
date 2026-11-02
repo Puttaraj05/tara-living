@@ -24,6 +24,33 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/about",
+          destination: "/?section=about",
+        },
+        {
+          source: "/services",
+          destination: "/?section=services",
+        },
+        {
+          source: "/process",
+          destination: "/?section=process",
+        },
+        {
+          source: "/journal",
+          destination: "/?section=journal",
+        },
+        {
+          source: "/contact",
+          destination: "/?section=contact",
+        },
+      ],
+    };
+  },
 };
 
 export default nextConfig;
